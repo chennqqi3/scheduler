@@ -1,0 +1,46 @@
+﻿#!/bin/bash
+set -e # exit immediately if a simple command exits with a non-zero status
+ 
+check_command_avail () {
+    while [ $# -ne 0 ]; do
+        if command -v $1 &> /dev/null; then :; else
+            echo >&2 "$UTIL: missing $1, cannot proceed"
+            exit 1
+        fi
+        shift
+    done
+}
+ 
+auto_gen () {
+       rm -rf buildinfo.go
+       cat > buildinfo.go <<DVEOF
+package main
+ 
+// Default build-time variable for library-import.
+// This file is overridden on build with build-time informations.
+const (
+       GitCommit string = "$GITCOMMIT"
+       BuildTime string = "$BUILDTIME"
+)
+ 
+DVEOF
+}
+ 
+check_command_avail go
+check_command_avail godep
+check_command_avail git
+ 
+GITCOMMIT=$(git rev-parse --short HEAD)
+if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+       GITCOMMIT="$GITCOMMIT-dirty"
+fi
+BUILDTIME=$(date -u)
+auto_gen
+
+echo ""
+echo "------------------- Build Binary --------------------"
+go build
+echo "--------------- Build Binary Success ----------------"
+rm -f buildinfo.go
+./scheduler -version
+echo ""

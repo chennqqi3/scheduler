@@ -1,0 +1,48 @@
+﻿{
+       "AgentRpcPort": 1990,
+       "localIp": "127.0.0.1",
+       "redis": {
+              "sentinel": {
+                     "usesntl": false,
+                     "mastername":"mymaster",
+                     "sntladdrs": ["127.0.0.1:26379"]
+              },
+              "dsn":"127.0.0.1:6379",
+              "password":"MBTWaNOTW35lhjYG0tJy4A=="
+       },
+       "db": {
+              "dsn": "@tcp(127.0.0.1:3306)/hipaas?loc=Local&parseTime=true",
+              "userName":"root",
+              "password":"cuvEg9NGVj15MsFBSuE2ng=="
+       },
+       "netservice": {
+              "switch": false,
+              "service":{
+                     "host": "localhost",
+                     "port": 8889,
+					 "caCrtFile": "/var/mwc/jobs/packages/scheduler/ca.crt",
+                     "auth": true,
+                     "crtFile": "/var/mwc/jobs/packages/scheduler/netservice_client.crt",
+                     "keyFile": "/var/mwc/jobs/packages/scheduler/netservice_client.key"
+              }
+             
+       },
+       "maintenancemode":  {
+              "switch": false
+       },
+       "consulserver": {
+              "consuladdress": "127.0.0.1:8500",
+              "consuldatacenter": "",
+              "ctnrtoken": "",
+              "consulroutepath":"v1/router",
+              "consulctnrpath":"v1/containers"
+       },
+       "consulservice": {
+              "ctnrserviceprefix": "prometheus_container_",
+              "ctnrservicetags": ["hipaas_ctnr"]
+       },
+       "logLevel": {
+              "log_dir": "/var/mwc/sys/log/component",
+              "verbose": 0
+       }
+}
