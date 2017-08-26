@@ -62,7 +62,7 @@ Alternatively, HiPaaS can read its configuration from a JSON file in the followi
 {
         "debug": true,
         "interval": 5,
-"dockerPort": 5555,
+		"dockerPort": 5555,
         "AgentRpcPort": 1990,
         "domain": "apps.io",
         "localIp": "127.0.0.1",
@@ -87,7 +87,7 @@ Alternatively, HiPaaS can read its configuration from a JSON file in the followi
                "db": "hipaas",
                "collector": "hipaas_"
         },
-"netservice": {
+		"netservice": {
                "ip": "127.0.0.1",
                "port": 8889
         },
@@ -110,7 +110,7 @@ Alternatively, HiPaaS can read its configuration from a JSON file in the followi
                "netInterval":60,
                "vmInterval":300
         },
-"health": {
+		"health": {
                "timeout": 10,
                "interval": 5
         },
