@@ -1,7 +1,4 @@
-﻿scheduler/blob/develop/README.md
-
-
-# HiPaaS Scheduler
+﻿# HiPaaS Scheduler
 ## Getting Started
 ### External Dependencies
  
