@@ -25,7 +25,8 @@ func (top *Topology) GetGlobalTopology() (*model.GlobalLevel, error) {
        } else {
               edc[edcname] = val
        }
-	   return &model.GlobalLevel{
+ 
+       return &model.GlobalLevel{
                      EDC:            edc,
                      TopologyCommon: val.TopologyCommon,
               },
@@ -53,7 +54,8 @@ func GetEdcLevel() (*model.EDCLevel, error) {
                      conts = append(conts, container)
               }
        }
-	   // handle all teh az
+ 
+       // handle all teh az
        azs := make(map[string][]*node.Node)
        for _, az := range nodes {
               azs[az.AvailableZone] = append(azs[az.AvailableZone], az)
@@ -83,7 +85,7 @@ func GetEdcLevel() (*model.EDCLevel, error) {
               },
               nil
 }
-
+ 
 func GetAZLevel(nodes []*node.Node, conts []*realstate.Container) *model.AZLevel {
        // all the vlan in a AZ
        topocomm, vlan := GetVlan(nodes, conts)
@@ -104,7 +106,8 @@ func GetVlan(nodes []*node.Node, conts []*realstate.Container) (*model.TopologyC
        for _, nd := range nodes {
               vlans[nd.Region] = append(vlans[nd.Region], nd)
        }
-	   topocomm := model.TopologyCommon{
+ 
+       topocomm := model.TopologyCommon{
               Usage: &model.Resource{
                      Cpu:    0,
                      Memory: 0,
@@ -130,7 +133,8 @@ func GetVlanLevel(nodes []*node.Node, conts []*realstate.Container) *model.VlanL
        for _, nd := range nodes {
               vm[nd.IP] = append(vm[nd.IP], nd)
        }
-	   topocomm := model.TopologyCommon{
+ 
+       topocomm := model.TopologyCommon{
               Usage: &model.Resource{
                      Cpu:    0,
                      Memory: 0,
@@ -158,19 +162,20 @@ func GetVmLevel(nodes []*node.Node, conts []*realstate.Container) *model.VMLevel
        for _, nd := range nodes {
               nodesmap[nd.IP] = nd
        }
-	   var cpu, mem, unCPU, unMem int
+ 
+       var cpu, mem, unCPU, unMem int
  
        for _, nd := range nodes {
-              unCPU  = nd.CPU
-              unMem  = nd.Memory
+              unCPU += nd.CPU
+              unMem += nd.Memory
        }
  
        if len(conts) > 0 {
               for _, ct := range conts {
                      if _, ok := nodesmap[ct.IP]; ok {
                             containers[(*ct).ID] = ct
-                            cpu  = ct.CPU
-                            mem  = ct.Memory
+                            cpu += ct.CPU
+                            mem += ct.Memory
                      }
               }
  
@@ -188,7 +193,8 @@ func GetVmLevel(nodes []*node.Node, conts []*realstate.Container) *model.VMLevel
                      Memory: unMem,
               },
        }
-	   return &model.VMLevel{
+ 
+       return &model.VMLevel{
               Containers:     containers,
               TopologyCommon: topocomm,
        }
@@ -216,7 +222,8 @@ func GetVmGrpLevel(nodes []*node.Node, conts []*realstate.Container) *model.VMGr
        for _, nd := range nodes {
               vm[nd.IP] = append(vm[nd.IP], nd)
        }
-	   topocomm := model.TopologyCommon{
+ 
+       topocomm := model.TopologyCommon{
               Usage: &model.Resource{
                      Cpu:    0,
                      Memory: 0,
@@ -239,13 +246,13 @@ func GetVmGrpLevel(nodes []*node.Node, conts []*realstate.Container) *model.VMGr
               TopologyCommon: topocomm,
        }
 }
-
+ 
 func CalcTopoComm(tc1 *model.TopologyCommon, tc2 *model.TopologyCommon) {
        CalcResources(tc1.Usage, tc2.Usage)
        CalcResources(tc1.UnUsage, tc2.UnUsage)
 }
  
 func CalcResources(cr1 *model.Resource, cr2 *model.Resource) {
-       (*cr1).Cpu  = (*cr2).Cpu
-       (*cr1).Memory  = (*cr2).Memory
+       (*cr1).Cpu += (*cr2).Cpu
+       (*cr1).Memory += (*cr2).Memory
 }

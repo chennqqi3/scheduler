@@ -21,7 +21,7 @@ import (
        "github-beta.huawei.com/hipaas/scheduler/g"
        "github-beta.huawei.com/hipaas/scheduler/plugin/algorithm"
 )
-
+ 
 // container
 const imageRunMiniTime = 60
  
@@ -37,7 +37,7 @@ func NewContainerManager(
        config ConfigFunc,
        algo *algorithm.Config,
        updateAppStatusByName UpdateAppStatusByNameFunc,
-	   ) SchedulerProvider {
+) SchedulerProvider {
        return &ContainerManager{
               SyncController: SyncController{
                      RealState:     realState,
@@ -49,7 +49,7 @@ func NewContainerManager(
               },
        }
 }
-
+ 
 func (c *ContainerManager) StatusCompare(app *appStorage.App) error {
        if app == nil {
               return errors.New("app is nil")
@@ -61,7 +61,7 @@ func (c *ContainerManager) StatusCompare(app *appStorage.App) error {
  
        for _, container := range containers {
               if UpdateCompareFunc(app, container) == false {
-                     ctnrUpCount  
+                     ctnrUpCount++
               }
        }
  
@@ -70,10 +70,9 @@ func (c *ContainerManager) StatusCompare(app *appStorage.App) error {
        finish := func(status *realstate.DockerStatusStore) error {
               for _, node := range status.Node {
                      virNode, exist := g.RealNodeState.GetNode(node.IP)
-                     if !exist {						
+                     if !exist {
                             glog.Warningf("virNode is not exist, IP: %s", node.IP)
-							continue
-							
+                            continue
                      }
                      virNode.CPUVirtUsage = virNode.CPUVirtUsage + node.Cpu
                      virNode.MemVirtUsage = virNode.MemVirtUsage + node.Memory
@@ -92,7 +91,7 @@ func (c *ContainerManager) StatusCompare(app *appStorage.App) error {
  
        return nil
 }
-
+ 
 func (c *ContainerManager) CreateContainers(app *appStorage.App) error {
        if app.Status != appStorage.AppStatusPending {
               err := c.UpdateAppStatus(app, appStorage.AppStatusPending, "")
@@ -116,7 +115,7 @@ func (c *ContainerManager) createSomeContainers(app *appStorage.App, num int) er
               glog.Infof("CreateContainers, name: %s, num: %d", app.Name, num)
               now := time.Now()
               ipCount, err := c.Algo.Algorithm.Schedule(app, num)
-			  glog.Infof("schedule task name: %s, spend %v", app.Name, time.Now().Sub(now))
+              glog.Infof("schedule task name: %s, spend %v", app.Name, time.Now().Sub(now))
               if err != nil {
                      glog.Error("Algorithm.Schedule error: ", err)
                      c.UpdateAppStatus(app, appStorage.AppStatusPending, err.Error())
@@ -133,7 +132,7 @@ func (c *ContainerManager) createSomeContainers(app *appStorage.App, num int) er
                      ME.NewEventReporter(ME.StartToCreateApp,
                             ME.StartToCreateAppData{
                                    App:      *app,
-								   Birthday: time.Now(),
+                                   Birthday: time.Now(),
                                    Message:  fmt.Sprintf("App %v Begin to Create %v Containers --> %v", app.Name, app.Instance, app.Image.DockerImageURL),
                             })
               }
@@ -153,7 +152,7 @@ func (c *ContainerManager) createSomeContainers(app *appStorage.App, num int) er
               }
               return nil
        }
-return c.CreatingStatus(app.Name, app.Instance, num, callBack, finish)
+       return c.CreatingStatus(app.Name, app.Instance, num, callBack, finish)
 }
  
 type delPriority int
@@ -172,7 +171,8 @@ func (c *ContainerManager) getDeletePriority(ctnr *realstate.Container, mapCtnrs
        if nil != err {
               return delNone
        }
-	   exist, err := fastsettingInstance.IsCTNRExecModeExist(ctnr.ID)
+ 
+       exist, err := fastsettingInstance.IsCTNRExecModeExist(ctnr.ID)
        if nil != err {
               glog.Errorf("IsCTNRExecModeExist: %s fail:%v", ctnr.ID, err)
               return delNone
@@ -197,7 +197,7 @@ func (c *ContainerManager) chooseDeleteCtnrs(appName string, ctnrs []*realstate.
        if err != nil {
               return nil, err
        }
-	   mapCtnrsShrinked := make(map[string]bool)
+       mapCtnrsShrinked := make(map[string]bool)
        for _, jobContent := range jobContents {
               var opt *appStorage.UpdateInstanceOption
               err = json.Unmarshal([]byte(jobContent), &opt)
@@ -218,7 +218,7 @@ func (c *ContainerManager) chooseDeleteCtnrs(appName string, ctnrs []*realstate.
                             eleInDesignated = delCtnrsList.InsertAfter(ctnr, eleInDesignated)
                             break
                      }
-					 eleInDesignated = delCtnrsList.PushFront(ctnr)
+                     eleInDesignated = delCtnrsList.PushFront(ctnr)
               case notUpStatus:
                      if eleNotUpStatus != nil {
                             eleNotUpStatus = delCtnrsList.InsertAfter(ctnr, eleNotUpStatus)
@@ -238,7 +238,7 @@ func (c *ContainerManager) chooseDeleteCtnrs(appName string, ctnrs []*realstate.
                             eleUpStatus = delCtnrsList.InsertAfter(ctnr, eleNotUpStatus)
                             break
                      }
-					 if eleInDesignated != nil {
+                     if eleInDesignated != nil {
                             eleUpStatus = delCtnrsList.InsertAfter(ctnr, eleInDesignated)
                             break
                      }
@@ -254,14 +254,14 @@ func (c *ContainerManager) chooseDeleteCtnrs(appName string, ctnrs []*realstate.
        for ele := delCtnrsList.Front(); ele != nil; ele = ele.Next() {
               value, _ := ele.Value.(*realstate.Container)
               delCtnrs = append(delCtnrs, value)
-              length  
+              length++
               if length >= delCount {
                      break
               }
        }
        return delCtnrs, nil
 }
-
+ 
 func (c *ContainerManager) UpdateContainers(app *appStorage.App) error {
        realCount := c.RealState.ContainerCount(app.Name)
        if app.Instance == realCount {
@@ -279,7 +279,7 @@ func (c *ContainerManager) UpdateContainers(app *appStorage.App) error {
               Birthday: time.Now(),
               Message:  fmt.Sprintf("Update App %s instance  --> from %d to %d", app.Name, realCount, app.Instance),
        })
-	   glog.Infof("update %s containers from instance %d to %d", app.Name, realCount, app.Instance)
+       glog.Infof("update %s containers from instance %d to %d", app.Name, realCount, app.Instance)
        if app.Instance > realCount {
               diffCount := app.Instance - realCount
               err := c.createSomeContainers(app, diffCount)
@@ -296,7 +296,7 @@ func (c *ContainerManager) UpdateContainers(app *appStorage.App) error {
        }
        return nil
 }
-
+ 
 func (c *ContainerManager) DropContainers(appName string, appInstance int, containers []*realstate.Container) error {
        callBack := func() error {
               glog.Warningf("DropContainers, name: %s, num: %d", appName, len(containers))
@@ -312,7 +312,7 @@ func (c *ContainerManager) DropContainers(appName string, appInstance int, conta
               }
               return nil
        }
-	   finish := func(status *realstate.DockerStatusStore) error {
+       finish := func(status *realstate.DockerStatusStore) error {
               return nil
        }
        err := c.CreatingStatus(appName, appInstance, len(containers), callBack, finish)
@@ -322,19 +322,19 @@ func (c *ContainerManager) DropContainers(appName string, appInstance int, conta
 func (c *ContainerManager) runContainers(app *appStorage.App, ipCount map[string]int) {
        name := func() string {
               if id := uuid.GetGuid(); 13 <= len(id) {
-                     return id[0:13]   "_"   app.Name
+                     return id[0:13] + "_" + app.Name
               } else {
-                     return id   "_"   app.Name
+                     return id + "_" + app.Name
               }
        }
        for selectNodeIP, count := range ipCount {
               nodeAppDeployInfo := &node.NodeAppDeployInfo{App: app}
-              for k := 0; k < count; k   {
+              for k := 0; k < count; k++ {
                      deployInfo := &node.DeployInfo{
                             AgentIP:  selectNodeIP,
                             Ctnrname: name(),
                      }
-					 nodeAppDeployInfo.DeployInfos = append(nodeAppDeployInfo.DeployInfos, deployInfo)
+                     nodeAppDeployInfo.DeployInfos = append(nodeAppDeployInfo.DeployInfos, deployInfo)
               }
               go executor.GetDockerManager().NodeTaskCreateCtnr(selectNodeIP, []*node.NodeAppDeployInfo{nodeAppDeployInfo})
        }
@@ -356,7 +356,7 @@ func (c *ContainerManager) healthCheckOneContainer(container *realstate.Containe
                      }
                      return
               }
-			  tries, err := g.HealthCheckTries.Increase(container)
+              tries, err := g.HealthCheckTries.Increase(container)
               if err != nil {
                      glog.Errorf("increase health check tries error: %s", err.Error())
                      return
@@ -368,7 +368,7 @@ func (c *ContainerManager) healthCheckOneContainer(container *realstate.Containe
                             Reason:   "app health check failed.",
                             AppName:  container.AppName,
                             Error:    errInfo,
-							Birthday: time.Now(),
+                            Birthday: time.Now(),
                             Message:  "health check failed over the max tries.",
                      })
                      c.UpdateAppStatusByNameFunc(container.AppName, appStorage.AppStatusCreateSuccess, errInfo)
@@ -387,7 +387,7 @@ func (c *ContainerManager) healthCheckOneContainer(container *realstate.Containe
               glog.Warningf("health check ctnrid:%s ;appname:%s ; ip:%s ; status unknown. ",
                      container.ID, container.AppName, container.IP)
               return false
-			  case realstate.CTNR_HEALTH_DEAD:
+       case realstate.CTNR_HEALTH_DEAD:
               glog.Errorf("health check container failed. ctnrid:%s ;appname:%s ; ip:%s ;ports:%v ",
                      container.ID, container.AppName, container.IP, container.PortInfos)
               return false
@@ -403,7 +403,8 @@ func (c *ContainerManager) HealthCheck(app *appStorage.App) error {
        if !c.RealState.RealAppExists(app.Name) {
               return fmt.Errorf("real state do not exist for app: %s", app.Name)
        }
-	   if app.Status == appStorage.AppStatusCreateSuccess || app.Status == appStorage.AppStatusStartSuccess {
+ 
+       if app.Status == appStorage.AppStatusCreateSuccess || app.Status == appStorage.AppStatusStartSuccess {
               containers := c.RealState.Containers(app.Name)
               ctnrNum := len(containers)
               if ctnrNum != app.Instance {
@@ -422,7 +423,7 @@ func (c *ContainerManager) HealthCheck(app *appStorage.App) error {
                             exist, err := fs.IsCTNRExecModeExist(container.ID)
                             if nil != err {
                                    glog.Errorf("IsCTNRExecModeExist: %s fail:%v", container.ID, err)
-								   continue								   
+                                   continue
                             }
                             if exist || c.healthCheckOneContainer(container) {
                                    passed++
@@ -437,24 +438,24 @@ func (c *ContainerManager) HealthCheck(app *appStorage.App) error {
                             glog.Errorf("update app: %s status to: %s fail: %v", app.Name, appStorage.AppStatusStartSuccess, err)
                             return err
                      }
-					 ctnrs := make([]realstate.Container, 0)
+                     ctnrs := make([]realstate.Container, 0)
                      for _, ctnr := range containers {
-                            ctnrs = append(ctnrs, *ctnr)
-                     }
-                     ME.NewEventReporter(
-                            ME.AppStatusToStarted,
-                            ME.AppStatusToStartedData{
-                                   App:        *app,
-                                   Containers: ctnrs,
-                                   Birthday:   time.Now(),
-                                   Message:    fmt.Sprintf("App %v Health Check Success  --> Check %v Containers", app.Name, passed),
-                            })
-                     // report to mwc
-                     if app.Recovery != 0 && c.Config().RecoveryReport.Switch {
-                            glog.Infof(`recovery from failure successfully, name: %s, http post to "%s"`, app.Name, c.Config().RecoveryReport.RestAddress)
-							ctnrsJson, err := json.Marshal(containers)
-                            if err != nil {
-                                   glog.Error("json.Marshal fail: ", err)
+                            ctnrs = append(ctnrs, * ctnr)
+                     }
+                     ME.NewEventReporter (
+                            ME.AppStatusToStarted,
+                            ME.AppStatusToStartedData {
+                                   App: * app,
+                                   Containers: ctnrs,
+                                   Birthday: time.Now (),
+                                   Message: fmt.Sprintf ("App% v Health Check Success -> Check% v Containers", app.Name, passed),
+                            })
+                     // report to mwc
+                     if app.Recovery! = 0 &&c.Config (). RecoveryReport.Switch {
+                            glog.Infof (`recovery from failure successfully, name:% s, http post to '% s'`, app.Name, c.Config (). RecoveryReport.RestAddress)
+                            ctnrsJson, err: = json.Marshal (containers)
+                            if err! = nil {
+                                   glog.Error ( "json.Marshal fail: ", err)
                                    return err
                             }
                             reportJson := fmt.Sprintf(`{"name":"%s","containers":%s}`, app.Name, ctnrsJson)
@@ -475,7 +476,7 @@ func (c *ContainerManager) HealthCheck(app *appStorage.App) error {
        }
        return nil
 }
-
+ 
 func (c *ContainerManager) afterHealthCheck(app *appStorage.App) error {
        // checkout container status
        if app.Status == appStorage.AppStatusStartSuccess {
@@ -496,7 +497,8 @@ func (c *ContainerManager) afterHealthCheck(app *appStorage.App) error {
                             if isExist {
                                    continue
                             }
-							// recovery from failure, drop old container first, it will created by update instance
+ 
+                            // recovery from failure, drop old container first, it will created by update instance
                             recovery = true
                             glog.Warningf(`DropContainers, because its status is "%s"`, container.Status)
                             c.DropContainers(app.Name, 1, []*realstate.Container{container})
@@ -511,7 +513,7 @@ func (c *ContainerManager) afterHealthCheck(app *appStorage.App) error {
        }
        return nil
 }
-
+ 
 func httpPost(method, url, body string) (string, error) {
        client := &http.Client{}
        req, err := http.NewRequest(method, url, strings.NewReader(body))
@@ -534,9 +536,5 @@ func httpPost(method, url, body string) (string, error) {
        respData := string(respbody)
  
        //Success 2xx
-       if http.StatusOK != resp.StatusCode {
-              return respData, fmt.Errorf(`respone code: "%d", body: "%s"`, resp.StatusCode, respData)
-       }
- 
-       return respData, nil
+       if http.Status OK != resp.StatusCode { return respData, fmt.Errorf(`response code: "%d", body: "%s"`, resp.StatusCode, respData) } return respData, nil
 }

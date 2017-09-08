@@ -19,7 +19,7 @@ import (
 // NodeState contain RPC function calls.
 type NodeState struct {
 }
-
+ 
 // Push save node infomation.
 func (Node *NodeState) Push(req *node.NodeRequest, resp *node.NodeResponse) error {
        if req == nil {
@@ -42,7 +42,7 @@ func (Node *NodeState) Push(req *node.NodeRequest, resp *node.NodeResponse) erro
                      glog.Error("string parse int fail:", err)
                      return err
               }
-			  sign := int64(tmpSign)
+              sign := int64(tmpSign)
               if time.Now().Unix()-sign > g.Config().SignMsg.Interval && time.Now().Unix()-sign < -g.Config().SignMsg.Interval {
                      return errors.New("request refuse!")
               }
@@ -54,7 +54,8 @@ func (Node *NodeState) Push(req *node.NodeRequest, resp *node.NodeResponse) erro
               glog.Errorf("minion ip:%s version:%s is not compatible with the scheduler required minium minion version:%s",
                      req.Node.IP, req.Node.Version, g.MINION_MINIMUM_VERSION)
        }
-	   updatetime := time.Now().Unix()
+ 
+       updatetime := time.Now().Unix()
        req.Node.HeartBeatAt = updatetime
        req.Node.UpdateAt = updatetime
        getNode, exist := g.RealNodeState.GetNode(req.Node.IP)
@@ -66,27 +67,27 @@ func (Node *NodeState) Push(req *node.NodeRequest, resp *node.NodeResponse) erro
        } else {
               if req.Node.CPUVirtUsage > getNode.CPUVirtUsage || req.Node.MemVirtUsage > getNode.MemVirtUsage {
                      req.Node.CPUVirtUsage = getNode.CPUVirtUsage
-					 req.Node.MemVirtUsage = getNode.MemVirtUsage
-              } else {
-                     req.Node.CPUVirtUsage = req.Node.CPUUsage
-                     req.Node.MemVirtUsage = req.Node.MemUsage
-              }
-              g.UpdateNode(&req.Node)
-       }
- 
-       if req.Containers == nil {
-              return nil
-       }
- 
-       for _, container := range req.Containers {
-              container.IP = req.IP
-              container.UpdateAt = updatetime
-              g.RealMinionState.UpdateContainer(container)
-       }
- 
-       return nil
+                     req.Node.MemVirtUsage = getNode.MemVirtUsage
+              } else {
+                     req.Node.CPUVirtUsage = req.Node.CPUUsage
+                     req.Node.MemVirtUsage = req.Node.MemUsage
+              }
+              g.UpdateNode (& req.Node)
+       }
+ 
+       if req.Containers == nil {
+              return nil
+       }
+ 
+       for _, container: = range req.Containers {
+              container.IP = req.IP
+              container.UpdateAt = updatetime
+              g.RealMinionState.UpdateContainer (container)
+       }
+ 
+       return nil
 }
-
+ 
 // NodeDown mark the node down.
 func (Node *NodeState) NodeDown(ip string, resp *node.NodeResponse) error {
        if ip == "" {
@@ -107,7 +108,7 @@ func (Node *NodeState) Heartbeat(req *node.NodeHeartbeat, resp *node.NodeRespons
               resp.Code = node.NilNodeRequestError
               return errors.New("node.NodeRequest can't be nil")
        }
-	   if g.Config().SignMsg.Switch {
+       if g.Config().SignMsg.Switch {
               myaes, err := aes.New("")
               if err != nil {
                      glog.Error("create crypt fail:", err)
@@ -128,7 +129,8 @@ func (Node *NodeState) Heartbeat(req *node.NodeHeartbeat, resp *node.NodeRespons
                      return errors.New("request refuse!")
               }
        }
-	   getNode, exist := g.RealNodeState.GetNode(req.NodeIP)
+ 
+       getNode, exist := g.RealNodeState.GetNode(req.NodeIP)
        if !exist {
               return nil
        }
@@ -141,7 +143,7 @@ func (Node *NodeState) Heartbeat(req *node.NodeHeartbeat, resp *node.NodeRespons
 func (Node *NodeState) AppTaskResult(req *createstate.AppTaskCreateCtnrResult, resp *createstate.RPCCommonRespone) error {
        dockStatus := realstate.DockerStatusNew(g.RedisConnPool)
        result := realstate.Result{}
-	   state, err := dockStatus.GetCreatingStatus(req.AppName)
+       state, err := dockStatus.GetCreatingStatus(req.AppName)
        if err != nil {
               result.CreateUnixTime = time.Now().Unix()
               glog.Error("GetCreatingStatus failed. Error: ", err)
@@ -159,7 +161,8 @@ func (Node *NodeState) AppTaskResult(req *createstate.AppTaskCreateCtnrResult, r
               })
               result.Fail++
        }
-	   for _, ctnr := range req.Success {
+ 
+       for _, ctnr := range req.Success {
               glog.Infof("run container success, Appname: %s, ctrnid: %s, ctrnName:%s, nodeIP:%s", ctnr.AppName, ctnr.ID, ctnr.ContainerName, req.NodeIp)
               ctnr.UpdateAt = time.Now().Unix()
               g.RealState.UpdateContainer(ctnr)
@@ -169,7 +172,7 @@ func (Node *NodeState) AppTaskResult(req *createstate.AppTaskCreateCtnrResult, r
               g.UpdateAppStatusByName(req.AppName, app.AppStatusPending, strings.Join(req.Fail, ";"))
        }
        err = dockStatus.DockerStatusUpdateResult(req.AppName, result)
-	   if err != nil {
+       if err != nil {
               glog.Warningf("App %s CreatingState.DockerStatusUpdateResult fail: %v", req.AppName, err)
        }
        return nil

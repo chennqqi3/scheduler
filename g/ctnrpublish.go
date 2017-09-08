@@ -17,7 +17,7 @@ import (
 var (
        ctnrPublisher ContainerPublish
 )
-
+ 
 /*
        Description:  start container publish model driver with a task controll pool.
 */
@@ -37,7 +37,7 @@ func StartCtnrPublisher() error {
        if nil != poolerr {
               return fmt.Errorf("create task pool failed. Error: %v", poolerr)
        }
-	   ctnrPublisher = ContainerPublish{
+       ctnrPublisher = ContainerPublish{
               drv:                    driver,
               task:                   pool,
               appStartedChan:         make(chan []byte, 200),
@@ -61,7 +61,7 @@ type ContainerPublish struct {
        delCtnrChan            chan []byte
        fastSettingSuccessChan chan []byte
 }
-
+ 
 /*
        Description:  this is a go routine to syncronize containers info in consul
        with local container data.
@@ -82,7 +82,7 @@ func (cp *ContainerPublish) updateAllCtnrs(interval int) {
                      glog.Error("container publish ListApps failed. Error:", err)
                      continue
               }
-			  for appName, _ := range appsmap {
+              for appName, _ := range appsmap {
                      //delete the containers do not exist in realstate
                      if _, ok := apps[appName]; !ok {
                             cp.task.Require()
@@ -99,7 +99,7 @@ func (cp *ContainerPublish) updateAllCtnrs(interval int) {
               for appname, realapp := range apps {
                      //only add started success containers
                      if realapp.Status == app.AppStatusStartSuccess {
-					 cp.task.Require()
+                            cp.task.Require()
                             go func(appname string) {
                                    defer cp.task.Release()
                                    cnslCtnrs, err := cp.drv.GetAppCtnrs(appname)
@@ -111,7 +111,7 @@ func (cp *ContainerPublish) updateAllCtnrs(interval int) {
                                    var ctnrs []realstate.Container
                                    for _, ctnr := range realCtnrs {
                                           // UpdateAt and Status don't need to be published
-										  ctnr.UpdateAt = 0
+                                          ctnr.UpdateAt = 0
                                           ctnr.Status = ""
                                           ctnrs = append(ctnrs, *ctnr)
                                    }
@@ -126,7 +126,7 @@ func (cp *ContainerPublish) updateAllCtnrs(interval int) {
                                    cnslPortInfo := make(map[string]string)
  
                                    realMap := make(map[string]realstate.Container, len(realCtnrs))
-								   for _, ctnr := range ctnrs {
+                                   for _, ctnr := range ctnrs {
                                           for _, env := range ctnr.Envs {
                                                  realEnv[ctnr.ID+env.K] = env.V
                                           }
@@ -137,7 +137,8 @@ func (cp *ContainerPublish) updateAllCtnrs(interval int) {
                                           for _, portInfo := range ctnr.PortInfos {
                                                  var info string
                                                  if len(portInfo.Ports) > 0 {
-                                                        info = fmt.Sprintf("portname:%v HostIP:%v HostPort:%v originport:%v",portInfo.Portname, portInfo.Ports[0].HostIP, portInfo.Ports[0].HostPort, portInfo.OriginPort)
+                                                        info = fmt.Sprintf("portname:%v HostIP:%v HostPort:%v originport:%v",
+                                                               portInfo.Portname, portInfo.Ports[0].HostIP, portInfo.Ports[0].HostPort, portInfo.OriginPort)
                                                  } else {
                                                         info = fmt.Sprintf("portname:%v originport:%v", portInfo.Portname, portInfo.OriginPort)
                                                  }
@@ -149,7 +150,8 @@ func (cp *ContainerPublish) updateAllCtnrs(interval int) {
                                           ctnr.PortInfos = nil
                                           realMap[ctnr.ID] = ctnr
                                    }
-								   cnslMap := make(map[string]realstate.Container, len(*cnslCtnrs))
+ 
+                                   cnslMap := make(map[string]realstate.Container, len(*cnslCtnrs))
                                    for _, ctnr := range *cnslCtnrs {
                                           for _, env := range ctnr.Envs {
                                                  cnslEnv[ctnr.ID+env.K] = env.V
@@ -161,7 +163,7 @@ func (cp *ContainerPublish) updateAllCtnrs(interval int) {
                                           }
  
                                           for _, portInfo := range ctnr.PortInfos {
-										  var info string
+                                                 var info string
                                                  if len(portInfo.Ports) > 0 {
                                                         info = fmt.Sprintf("portname:%v HostIP:%v HostPort:%v originport:%v",
                                                                portInfo.Portname, portInfo.Ports[0].HostIP, portInfo.Ports[0].HostPort, portInfo.OriginPort)
@@ -173,7 +175,7 @@ func (cp *ContainerPublish) updateAllCtnrs(interval int) {
  
                                           ctnr.Envs = nil
                                           ctnr.Ports = nil
-										  ctnr.PortInfos = nil
+                                          ctnr.PortInfos = nil
                                           cnslMap[ctnr.ID] = ctnr
                                    }
  
@@ -187,7 +189,7 @@ func (cp *ContainerPublish) updateAllCtnrs(interval int) {
                                    glog.Debug("sync update containers pub, appname", appname)
                                    if err = cp.drv.UpdateAppCtnrs(appname, &ctnrs); nil != err {
                                           glog.Error("UpdateAppCtnrs failed. Error: ", err)
-										  } else {
+                                   } else {
                                           glog.Infof("Update app: %v containers to consul", appname)
                                    }
                             }(appname)
@@ -207,7 +209,7 @@ func (cp *ContainerPublish) registerCtnrPublisherEvents() error {
               Drop:        false,
               Description: "ctnr publisher.",
        }
-	   if _, err := ME.RegisterEvent(&appStartedUser, &cp.appStartedChan); nil != err {
+       if _, err := ME.RegisterEvent(&appStartedUser, &cp.appStartedChan); nil != err {
               return fmt.Errorf("regisger ctnr publisher failed. event: AppStatusToStarted, Error: %v", err)
        }
  
@@ -220,7 +222,8 @@ func (cp *ContainerPublish) registerCtnrPublisherEvents() error {
        if _, err := ME.RegisterEvent(&delCtnrUser, &cp.delCtnrChan); nil != err {
               return fmt.Errorf("regisger ctnr publisher failed. event: DeleteContainersBecauseTheAppItBelongsWasDeleted, Error: %v", err)
        }
-	   fastSettingSuccessUser := ME.User{
+ 
+       fastSettingSuccessUser := ME.User{
               EventID:     ME.FastSettingSuccess,
               RequireData: true,
               Drop:        false,
@@ -253,7 +256,7 @@ func (cp *ContainerPublish) eventCollector() {
                                    val.Containers[k].Status = ""
                             }
                             if err := cp.drv.AddAppCtnrs(val.App.Name, &val.Containers); nil != err {
-									glog.Errorf("Update app %v containers failed. Error: %v", val.App.Name, err)
+                                   glog.Errorf("Update app %v containers failed. Error: %v", val.App.Name, err)
                             } else {
                                    glog.Infof("Update app %s containers to consul.", val.App.Name)
                             }
@@ -265,7 +268,7 @@ func (cp *ContainerPublish) eventCollector() {
                             glog.Error("ctnr pub event DeleteContainersBecauseTheAppItBelongsWasDeletedData unamrshal failed. Error: ", err)
                             continue
                      }
-					 cp.task.Execute(func() {
+                     cp.task.Execute(func() {
                             if err := cp.drv.DelAppCtnrs(val.AppName); nil != err {
                                    glog.Errorf("delete app %v containers from consul failed. Error: %v", val.AppName, err)
                             } else {
@@ -279,7 +282,7 @@ func (cp *ContainerPublish) eventCollector() {
                             glog.Error("ctnr pub event FastSettingSuccessData unamrshal failed. Error: ", err)
                             continue
                      }
-					 cp.task.Execute(func() {
+                     cp.task.Execute(func() {
                             update := func() bool {
                                    containers := RealState.Containers(val.AppName)
                                    ctnrs := make([]realstate.Container, 0)
@@ -289,7 +292,7 @@ func (cp *ContainerPublish) eventCollector() {
                                                  case FS.Normal, FS.Restart:
                                                         for _, p := range container.PortInfos {
                                                                if p.Ports == nil || len(p.Ports) == 0 {
-															   return false
+                                                                      return false
                                                                }
                                                         }
                                                  case FS.Maint:
@@ -301,18 +304,19 @@ func (cp *ContainerPublish) eventCollector() {
                                                  }
                                           }
                                           // UpdateAt and Status don't need to be published
-										  container.UpdateAt = 0
+                                          container.UpdateAt = 0
                                           container.Status = ""
                                           ctnrs = append(ctnrs, *container)
                                    }
                                    if err := cp.drv.AddAppCtnrs(val.AppName, &ctnrs); nil != err {
-                                          glog.Errorf("Update app %v containers failed. Error: %v", val.AppName, err)
+                                          glog.Errorf("Update app %v containers failed.Error: %v", val.AppName, err)
                                    } else {
                                           glog.Infof("Update app %s containers to consul.", val.AppName)
                                    }
                                    return true
                             }
-							for update() == false && time.Since(val.Birthday) < time.Second*3*time.Duration(Config().Interval) {
+ 
+                            for update() == false && time.Since(val.Birthday) < time.Second*3*time.Duration(Config().Interval) {
                                    time.Sleep(time.Second)
                             }
                      })

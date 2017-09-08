@@ -20,7 +20,7 @@ import (
        "math/rand"
        "strconv"
 )
-
+ 
 func newRedisPool(server, password string) *redis.Pool {
        return &redis.Pool{
               MaxIdle:     5,
@@ -41,7 +41,7 @@ func newRedisPool(server, password string) *redis.Pool {
                                    return nil, err
                             }
                             realPassword, err := myaes.Decrypt(password)
-							if err != nil {
+                            if err != nil {
                                    c.Close()
                                    return nil, err
                             }
@@ -65,7 +65,7 @@ func newRedisPool(server, password string) *redis.Pool {
  
 func consulGetRoutes(appName string) ([]*routes.ContainerRoute, error) {
        routedrivers.ConsulServer = &routedrivers.ConsulConfig{
-	   ConsulAddress:    g.Config().ConsulServer.ConsulAddress,
+              ConsulAddress:    g.Config().ConsulServer.ConsulAddress,
               ConsulScheme:     g.Config().ConsulServer.ConsulScheme,
               ConsulDatacenter: g.Config().ConsulServer.ConsulDatacenter,
        }
@@ -87,15 +87,16 @@ var _ = Describe("Router suite test",func(){
               containers []realstate.Container
               birthday time.Time = time.Now()
        )
-	   randomStr := func(prefix string, ls int) string{
+ 
+       randomStr := func(prefix string, ls int) string{
               str := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
               bytes := []byte(str)
               result := []byte{}
               r := rand.New(rand.NewSource(time.Now().UnixNano()))
-              for i :=0;i < ls; i   {
+              for i :=0;i < ls; i++ {
                      result = append(result,bytes[r.Intn(len(bytes))])
               }
-              return prefix   string(result)
+              return prefix + string(result)
        }
  
        // g parse cfg
@@ -111,7 +112,7 @@ var _ = Describe("Router suite test",func(){
        // started RouterDriv
        g.RedisConnPool = redisPool
        driver := "redis"
-	   g.RealState,err = realstate.NewSafeRealState(driver, g.RedisConnPool)
+       g.RealState,err = realstate.NewSafeRealState(driver, g.RedisConnPool)
        if err != nil {
               Fail("RealState can not init!")
        }
@@ -134,7 +135,7 @@ var _ = Describe("Router suite test",func(){
                             DockerPassword:    "",
                             DockerEmail:       "huangcuiyang@huawei.com",
                      },
-					 Recovery: 0,
+                     Recovery: 0,
                      Status:   "Started",
                      Region:   "fg",
                      VMType:   "df",
@@ -156,7 +157,8 @@ var _ = Describe("Router suite test",func(){
               JustBeforeEach(func(){
  
               })
-			  AfterEach(func(){
+ 
+              AfterEach(func(){
                      // release data
               })
  
@@ -178,7 +180,7 @@ var _ = Describe("Router suite test",func(){
                                                  HostPort: "60000",
                                           },
                                    },
-								   OriginPort: "8080",
+                                   OriginPort: "8080",
                             },
                      }
                      for k,_ := range containers {
@@ -199,7 +201,8 @@ var _ = Describe("Router suite test",func(){
                             // send App started event                        
                             ME.NewEventReporter(ME.AppStatusToStarted,msg)
                             time.Sleep(time.Second * 3)
-							routers,_ := consulGetRoutes(app.Name)
+ 
+                            routers,_ := consulGetRoutes(app.Name)
                             Expect(len(routers)).To(Equal(0))
                      })
                      By("Step 2,Keeproute is no",func () {
@@ -214,8 +217,9 @@ var _ = Describe("Router suite test",func(){
                             }
                             // send App started event                        
                             ME.NewEventReporter(ME.AppStatusToStarted,msg)
-                            time.Sleep(time.Second * 3)
-							routers,_ := consulGetRoutes(app.Name)
+                            time.Sleep(time.Second * 3)       
+ 
+                            routers,_ := consulGetRoutes(app.Name)
                             Expect(len(routers)).To(Equal(0))                                                  
                      })
                      By("Step 3,Health is empty",func () {
@@ -231,8 +235,9 @@ var _ = Describe("Router suite test",func(){
                             }
                             // send App started event                        
                             ME.NewEventReporter(ME.AppStatusToStarted,msg)
-                            time.Sleep(time.Second * 3)
-							routers,_ := consulGetRoutes(app.Name)
+                            time.Sleep(time.Second * 3)       
+ 
+                            routers,_ := consulGetRoutes(app.Name)
                             Expect(len(routers)).To(Equal(0))                             
                      })
                      By("Step 4,normal",func () {
@@ -251,7 +256,7 @@ var _ = Describe("Router suite test",func(){
                                    Birthday: birthday,
                                    Message: "test",
                             }
-							// send App started event                        
+                            // send App started event                        
                             ME.NewEventReporter(ME.AppStatusToStarted,msg)
                             time.Sleep(time.Second * 3)
                             // check consul data
@@ -263,7 +268,7 @@ var _ = Describe("Router suite test",func(){
                                    Expect(router.AppName).To(Equal(app.Name))
                                    Expect(router.ContainerID).To(Equal(containers[0].ID))
                                    tmp_port,_ := strconv.Atoi(portinfos[0].Ports[0].HostPort)
-								   Expect(router.Port).To(Equal(tmp_port))
+                                   Expect(router.Port).To(Equal(tmp_port))
                                    Expect(router.PortName).To(Equal(portinfos[0].Portname))
                             }
                      })
@@ -282,7 +287,7 @@ var _ = Describe("Router suite test",func(){
                      Expect(err).NotTo(HaveOccurred())
                      Expect(len(routers)).To(Equal(0))
               })
-			  It("failover to consul",func () {
+              It("failover to consul",func () {
                      By("Step 1,Add router",func () {
                             app.Status = "Started"
                             app.Health = []storageapp.Health {
@@ -294,24 +299,24 @@ var _ = Describe("Router suite test",func(){
                             portinfos := []realstate.PortInfo{
                                    {
                                           Portname: "public",
-										  Ports: []docker.PortBinding{
-                                                 {
-                                                        HostIP: "127.0.0.1",
-                                                        HostPort: "60000",
-                                                 },
-                                          },
-                                          OriginPort: "8080",
-                                   },
-                            }
-                            for k,_ := range containers {
-                                   containers[k].PortInfos = portinfos
-                            }
-                            //                        
-                            msg := ME.AppStatusToStartedData{
+                                          Ports: []{docker.PortBinding
+                                                 {
+                                                        HostIP: "127.0.0.1"
+                                                        HostPort: "60000",
+                                                 },
+                                          },
+                                          OriginPort: "8080",
+                                   },
+                            }
+                            for k, _ range = {containers
+                                   containers [k] = .PortInfos portinfos
+                            }
+                            //
+                            msg = ME.AppStatusToStartedData{
                                    App: app,
                                    Containers: containers,
                                    Birthday: birthday,
-								   Message: "test",
+                                   Message: "test",
                             }
                             // send App started event                        
                             ME.NewEventReporter(ME.AppStatusToStarted,msg)                          
@@ -327,7 +332,7 @@ var _ = Describe("Router suite test",func(){
                             time.Sleep(time.Second * 12)
                             // check
                             routers,err := consulGetRoutes(app.Name)
-							Expect(err).NotTo(HaveOccurred())
+                            Expect(err).NotTo(HaveOccurred())
                             Expect(len(routers)).To(Equal(1))
                             Expect(routers[0].Port).To(Equal(-1))
                      })
@@ -341,25 +346,25 @@ var _ = Describe("Router suite test",func(){
                                           Cmd: "",
                                    },
                             }
-                            portinfos := []realstate.PortInfo{
-                                   {
-                                          Portname: "public",
-										  Ports: []docker.PortBinding{
-                                                 {
-                                                        HostIP: "127.0.0.1",
-                                                        HostPort: "60000",
-                                                 },
-                                          },
-                                          OriginPort: "8080",
-                                   },
-                            }
-                            for k,_ := range containers {
-                                   containers[k].PortInfos = portinfos
-                            }
-                            //
-							msg := ME.AppStatusToStartedData{
-                                   App: app,
-                                   Containers: containers,
+                            portinfos := []{realstate.PortInfo
+                                   {
+                                          Scanner: "public",
+                                          Ports: [] {docker.PortBinding
+                                                 {
+                                                        HostIP: "127.0.0.1"
+                                                        HostPort: "60000",
+                                                 },
+                                          },
+                                          OriginPort: "8080",
+                                   },
+                            }
+                            for k, _ range = {containers
+                                   containers [k] = .PortInfos portinfos
+                            }
+                            //
+                            msg = {ME.AppStatusToStartedData
+                                   App: App,
+                                   containers: containers,
                                    Birthday: birthday,
                                    Message: "test",
                             }
@@ -374,7 +379,7 @@ var _ = Describe("Router suite test",func(){
                                    ContainerID: containers[0].ID,
                                    Message: "test",
                             }
-							ME.NewEventReporter(ME.FastSettingSuccess,msg)
+                            ME.NewEventReporter(ME.FastSettingSuccess,msg)
                             time.Sleep(time.Second * 3)
                             // check
                             routers,err := consulGetRoutes(app.Name)

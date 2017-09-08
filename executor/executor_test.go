@@ -27,16 +27,16 @@ var _ = Describe("executor suite test", func() {
               deployInfo *node.DeployInfo
               env            map[string]string
        )
-	   
-randomstr := func(prefix string,lns int) string{
+ 
+       randomstr := func(prefix string,lns int) string{
               str := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
               bytes := []byte(str)
               result := []byte{}
               r := rand.New(rand.NewSource(time.Now().UnixNano()))
-              for i :=0;i < lns; i   {
+              for i :=0;i < lns; i++ {
                      result = append(result,bytes[r.Intn(len(bytes))])
               }
-              return prefix string(result)
+              return prefix+string(result)
        }
  
        // g parse config
@@ -54,7 +54,7 @@ randomstr := func(prefix string,lns int) string{
        Context("ParaPath", func() {
               It("when the length of path is equal zero", func() {
                      path := ""
-					 pathstr := ParaPath(path)
+                     pathstr := ParaPath(path)
                      Expect(pathstr).To(Equal(path))
               })
               It("when the length of path is equal one", func() {
@@ -74,7 +74,7 @@ randomstr := func(prefix string,lns int) string{
                             Name:        randomstr("hcytest",10),
                             Id:           int64(os.Getpid()),
                             CPU:         1,
-							Memory:      256,
+                            Memory:      256,
                             Instance: 1,
                             Image: storageapp.Image{
                                    DockerImageURL: "9.91.17.12:5000/harlan/test",
@@ -91,7 +91,7 @@ randomstr := func(prefix string,lns int) string{
                             Ports: []storageapp.Port{
                                    {
                                           PortName: "public",
-										  Port: 8080,
+                                          Port: 8080,
                                    },
                                    {
                                           PortName: "monitor",
@@ -110,7 +110,7 @@ randomstr := func(prefix string,lns int) string{
                                    },
                             },           
                      }
-					 env = map[string]string{
+                     env = map[string]string{
                             "HIPAAS_IP":"10.62.12.23",
                             "HIPAAS_GATEWAY":"10.10.1.1",
                             "HIPAAS_MASK":"255.0.0.0",
@@ -128,7 +128,7 @@ randomstr := func(prefix string,lns int) string{
                             app.Envs = append(app.Envs,storageapp.Env{
                                    K: key,
                                    V: val,
-								   })
+                            })
                      }                   
                      deployInfo = &node.DeployInfo{
                             AgentIP:     "127.0.0.1",
@@ -146,7 +146,8 @@ randomstr := func(prefix string,lns int) string{
                      app.Image.DockerLoginServer = "9.91.34.54"
                      app.Image.DockerUser = "harlantest"
                      app.Image.DockerPassword = "testpasswd"
-					 _,err := ParaRunContainerOption(app,deployInfo)
+ 
+                     _,err := ParaRunContainerOption(app,deployInfo)
                      Expect(err).To(HaveOccurred())
               })
               It("Mount error",func(){
@@ -166,9 +167,9 @@ randomstr := func(prefix string,lns int) string{
                      _,err := ParaRunContainerOption(app,deployInfo)
                      Expect(err).To(HaveOccurred())
               })
-              It("normal testcase",func(){			  
+              It("normal testcase",func(){
                      result,err := ParaRunContainerOption(app,deployInfo)
-					 Expect(err).NotTo(HaveOccurred())
+                     Expect(err).NotTo(HaveOccurred())
                      _ = result
               })    
        })

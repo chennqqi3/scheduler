@@ -23,8 +23,8 @@ func ProcessStaleContainers(mapAppnameCtnrs map[string][]*realstate.Container) {
                      }
                      continue
               }
-
-for _, container := range containers {
+ 
+              for _, container := range containers {
                      glog.Warningf(`app: %s, id: %s, container down, need recovery from failure!`, name, container.ID)
                      brokenContainers = append(brokenContainers, container.ID)
                      RealState.DeleteContainer(container.AppName, container)
@@ -37,8 +37,8 @@ for _, container := range containers {
                      }
                      continue
               }
-			  
-			  // in recovery
+ 
+              // in recovery
               UpdateRecoveryByName(name, true)
               UpdateAppStatusByName(name, app.AppStatusPending, "container need recovery from failure")
               for _, container := range containers {
@@ -55,4 +55,3 @@ func DeleteContainerByIP(ip string) {
        mapAppNameCtnrs := RealState.GetContainersMapByNodeIP(ip)
        ProcessStaleContainers(mapAppNameCtnrs)
 }
-

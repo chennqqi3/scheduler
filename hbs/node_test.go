@@ -27,18 +27,18 @@ var _ = Describe("hbs", func() {
               resp *storagenode.NodeResponse
               node storagenode.Node
        )
-
-defer GinkgoRecover()
+ 
+       defer GinkgoRecover()
  
        randomStr := func(prefix string, ls int) string{
               str := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
               bytes := []byte(str)
               result := []byte{}
               r := rand.New(rand.NewSource(time.Now().UnixNano()))
-              for i :=0;i < ls; i   {
+              for i :=0;i < ls; i++ {
                      result = append(result,bytes[r.Intn(len(bytes))])
               }
-              return prefix   string(result)
+              return prefix + string(result)
        }
  
        nodestate := new(hbs.NodeState)
@@ -47,16 +47,17 @@ defer GinkgoRecover()
        BeforeEach(func() {
               err := g.ParseConfig(testcfg)
               if err != nil {
-                     Fail("g.ParseConfig fail: " err.Error())
+                     Fail("g.ParseConfig fail: "+err.Error())
               }
-			  g.RedisConnPool,err = redisoperate.InitRedisConnPool(g.Config().Redis)
+ 
+              g.RedisConnPool,err = redisoperate.InitRedisConnPool(g.Config().Redis)
               if err != nil {
-                     Fail("g.RedisConnPool InitRedisConnPool fail: " err.Error())
+                     Fail("g.RedisConnPool InitRedisConnPool fail: "+err.Error())
               }
  
  
               if err = g.NewDbMgr(); nil != err {
-                     Fail("Init mysql conn pool fail: " err.Error())
+                     Fail("Init mysql conn pool fail: "+err.Error())
               }
  
               driver := "redis"
@@ -69,7 +70,8 @@ defer GinkgoRecover()
               if err != nil {
                      Fail("RealNodeState init failed")
               }
-			  g.RealMinionState,err = realstate.NewSafeRealState(driver, g.RedisConnPool)
+ 
+              g.RealMinionState,err = realstate.NewSafeRealState(driver, g.RedisConnPool)
               if err != nil {
                      Fail("RealMinionState init failed")
               }
@@ -91,7 +93,7 @@ defer GinkgoRecover()
                                    IP:          "10.32.52.62",
                                    Image:       "/dfjds.image",
                                    Recovery:    true,
-								   AppName:     "jetty",
+                                   AppName:     "jetty",
                                    Ports:       []*realstate.Port{&realstate.Port{PublicPort: 8080}},
                                    Status:      "1",
                                    Hostname:    "zhangmanjuan",
@@ -110,8 +112,8 @@ defer GinkgoRecover()
                      Code: 200,
               }
        })
-
-AfterEach(func() {
+ 
+       AfterEach(func() {
               conn := g.RedisConnPool.Get()
               conn.Do("DEL", "hipaas_app_jetty")
               conn.Close()
@@ -133,7 +135,7 @@ AfterEach(func() {
                      Expect(err).To(BeNil())
                      Expect(req1.Node.UpdateAt).To(Equal(time.Now().Unix()))
               })
-			  It("when container not null", func() {
+              It("when container not null", func() {
                      err := nodestate.Push(req, resp)
                      Expect(err).To(BeNil())
                      Expect(req.Containers[0].UpdateAt).To(Equal(time.Now().Unix()))
@@ -152,7 +154,7 @@ AfterEach(func() {
                      Expect(err).To(BeNil())
                      Expect(resp.Code).To(Equal(200))
               })
-			  It("when ip is exist", func() {
+              It("when ip is exist", func() {
                      ip := node.IP
                      err := nodestate.NodeDown(ip, resp)
                      Expect(err).To(BeNil())
@@ -170,7 +172,7 @@ AfterEach(func() {
                      By("Sign more than interval",func(){
                             now_t := time.Now().Unix()
                             tmpSign := strconv.Itoa(int(now_t - g.Config().SignMsg.Interval - 1))
-							myaes,err := aes.New("")
+                            myaes,err := aes.New("")
                             Expect(err).NotTo(HaveOccurred())
                             sign,err := myaes.Encrypt(tmpSign)
                             Expect(err).NotTo(HaveOccurred())
@@ -181,7 +183,7 @@ AfterEach(func() {
                             err = nodestate.Heartbeat(req1,resp)
                             Expect(err).To(HaveOccurred(),"request refuse!")
                      })
-					 By("Sign less than interval",func(){
+                     By("Sign less than interval",func(){
                             now_t := time.Now().Unix()
                             tmpSign := strconv.Itoa(int(now_t))
                             myaes,err := aes.New("")
@@ -197,7 +199,7 @@ AfterEach(func() {
                             Expect(resp.Code).To(Equal(200))
                      })
               })
-			  It("when SignMsg.Switch is false",func(){
+              It("when SignMsg.Switch is false",func(){
                      if g.Config().SignMsg.Switch != true {
                             req1 := &storagenode.NodeHeartbeat {
                                    NodeIP: "10.30.50.60",
@@ -214,7 +216,7 @@ AfterEach(func() {
               JustBeforeEach(func () {
                      tmpname = randomStr("hcytest-",10)
               })
-			  AfterEach(func () {
+              AfterEach(func () {
                      rc := g.RedisConnPool.Get()
                      tmpkey := fmt.Sprintf("hipaas_app_%s",tmpname)
                      rc.Do("DEL",tmpkey)
@@ -232,7 +234,7 @@ AfterEach(func() {
                                           AppName: tmpname,
                                           Status: "Up",
                                    },
-								   &realstate.Container{
+                                   &realstate.Container{
                                           ID: randomStr("htestid-",14),
                                           IP: "10.39.54.47",
                                           AppName: tmpname,
@@ -247,7 +249,7 @@ AfterEach(func() {
               It("when fail is not 0",func(){
                      req1 := &createstate.AppTaskCreateCtnrResult {
                             AppName: tmpname,
-							Fail: []string{"create container failed"},
+                            Fail: []string{"create container failed"},
                             Success: []*realstate.Container {
                                    &realstate.Container{
                                           ID: randomStr("hcytestid-",14),

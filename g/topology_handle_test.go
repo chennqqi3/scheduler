@@ -19,8 +19,8 @@ var _ = Describe("Topology_handle Test",func () {
               oncego sync.Once
               mynode *nodeStorage.Node
        )
-
-BeforeEach(func () {
+ 
+       BeforeEach(func () {
               oncego.Do(func () {
                      // Config init
                      FlagInit()
@@ -37,7 +37,7 @@ BeforeEach(func () {
                      RealState, err = realstate.NewSafeRealState(driver, RedisConnPool)
                      Expect(err).NotTo(HaveOccurred())    
               })
-			  mynode = &nodeStorage.Node{
+              mynode = &nodeStorage.Node{
                      // Default this IP node is not exist
                      IP: "10.101.10.101",
                      Region: "unitTRegion1",
@@ -60,7 +60,8 @@ BeforeEach(func () {
        AfterEach(func () {
  
        })
-	   Describe("GetGlobalTopology",func () {
+ 
+       Describe("GetGlobalTopology",func () {
               var (
                      tmpnode1 nodeStorage.Node
                      tmpnode2 nodeStorage.Node
@@ -84,7 +85,7 @@ BeforeEach(func () {
                      UpdateNode(&tmpnode2)
                      UpdateNode(&tmpnode3)
               })
-			  AfterEach(func () {
+              AfterEach(func () {
                      err := DeleteNode(tmpnode1.IP)
                      Expect(err).To(BeNil())
                      DeleteNode(tmpnode2.IP)
@@ -98,4 +99,3 @@ BeforeEach(func () {
               })
        })
 })
-

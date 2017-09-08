@@ -23,7 +23,7 @@ const (
        ValidNodes   = "ValidNode"
        InvalidNodes = "InvalidNode"
 )
-
+ 
 type HttpHandler struct {
 }
  
@@ -44,7 +44,7 @@ func (this *HttpHandler) NodesHandler(w http.ResponseWriter, r *http.Request) {
  
        var IncompatibleNodes []*NodePackage.Node
        var CompatibleNodes []*NodePackage.Node
-	   for _, node := range nodes {
+       for _, node := range nodes {
               if bCompatible := g.Config().MinionMinVersion.IsVersionIncompatible(node.Version); bCompatible {
                      CompatibleNodes = append(CompatibleNodes, node)
               } else {
@@ -68,7 +68,7 @@ func (this *HttpHandler) NodesHandler(w http.ResponseWriter, r *http.Request) {
               return
        }
 }
-
+ 
 //show all real node
 func (this *HttpHandler) NodeHandler(w http.ResponseWriter, r *http.Request) {
        con_ip := r.FormValue(":ip")
@@ -88,7 +88,7 @@ func (this *HttpHandler) NodeHandler(w http.ResponseWriter, r *http.Request) {
        w.Header().Set("Content-Type", "application/json")
        w.Write(js)
 }
-
+ 
 //show all real app
 func (this *HttpHandler) RealStateHandler(w http.ResponseWriter, r *http.Request) {
        var containers []*realstate.Container
@@ -106,7 +106,7 @@ func (this *HttpHandler) RealStateHandler(w http.ResponseWriter, r *http.Request
        w.Header().Set("Content-Type", "application/json")
        w.Write(js)
 }
-
+ 
 //show real app by name
 func (this *HttpHandler) AppHandler(w http.ResponseWriter, r *http.Request) {
        appName := r.FormValue(":name")
@@ -120,7 +120,7 @@ func (this *HttpHandler) AppHandler(w http.ResponseWriter, r *http.Request) {
        idx := 0
        for _, v := range cs {
               vs[idx] = v
-              idx  
+              idx++
        }
  
        js, err := json.Marshal(vs)
@@ -132,7 +132,7 @@ func (this *HttpHandler) AppHandler(w http.ResponseWriter, r *http.Request) {
        w.Header().Set("Content-Type", "application/json")
        w.Write(js)
 }
-
+ 
 //show real app by name
 //func (this *HttpHandler) AppMonit(w http.ResponseWriter, r *http.Request) {
 //     var monitInfo []*monitor.ContainerMetrix
@@ -154,7 +154,7 @@ func (this *HttpHandler) AppHandler(w http.ResponseWriter, r *http.Request) {
 //            http.Error(w, err.Error(), http.StatusInternalServerError)
 //            return
 //     }
-
+ 
 //     for _, v := range cs {
 //            info, err := redisStorage.ContainerStats(v.IP, v.ID, 1)
 //            if err != nil {
@@ -174,7 +174,7 @@ func (this *HttpHandler) AppHandler(w http.ResponseWriter, r *http.Request) {
 //     w.Header().Set("Content-Type", "application/json")
 //     w.Write(js)
 //}
-
+ 
 //func (this *HttpHandler) VMMonit(w http.ResponseWriter, r *http.Request) {
 //     machineName := r.URL.Path[len("/vm/monit/"):]
 //     if machineName == "" {
@@ -193,7 +193,7 @@ func (this *HttpHandler) AppHandler(w http.ResponseWriter, r *http.Request) {
 //            http.Error(w, err.Error(), http.StatusInternalServerError)
 //            return
 //     }
-
+ 
 //     js, err := json.Marshal(machineInfo)
 //     if err != nil {
 //            http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -216,7 +216,7 @@ func (this *HttpHandler) GlobalTopologyInfo(w http.ResponseWriter, r *http.Reque
               http.Error(w, err.Error(), http.StatusInternalServerError)
               return
        }
-	   w.Header().Set("Content-Type", "application/json")
+       w.Header().Set("Content-Type", "application/json")
        w.Write(js)
 }
  
@@ -228,30 +228,30 @@ func (this *HttpHandler) SetContainerStatus(w http.ResponseWriter, r *http.Reque
        }
  
        var fastSetting *fastSet.FastSetting
-       if err = json.Unmarshal(body, &fastSetting); err != nil {
-              http.Error(w, err.Error(), http.StatusInternalServerError)
-              return
-       }
- 
-       glog.V(1).Infof("[Note] Received FastSetting Request: %v", fastSetting)
-       fastsettingInstance, err := fastsetting.GetFastsetting()
-	   if err != nil {
-              http.Error(w, err.Error(), http.StatusInternalServerError)
-              return
-       }
-       uuid, err := fastsettingInstance.AddFastSettingJob(fastSetting)
-       if err != nil {
-              http.Error(w, err.Error(), http.StatusInternalServerError)
-              return
-       }
- 
-       glog.V(1).Infof("[Note] Add FastSetting Job Success: %s", uuid)
-       js, err := json.Marshal(&createstate.SettingResponse{JobID: uuid})
-       if err != nil {
-              http.Error(w, err.Error(), http.StatusInternalServerError)
-              return
-       }
-	   w.Header().Set("Content-Type", "application/json")
+       if err = json.Unmarshal (body, & fastSetting); err! = nil {
+              http.Error (w, err.Error (), http.StatusInternalServerError)
+              return
+       }
+ 
+       glog.V (1) .Infof ("[Note] Received FastSetting Request:% v", Fixing)
+       determinationInstance, err: = determination.GetFrame ()
+       if err! = nil {
+              http.Error (w, err.Error (), http.StatusInternalServerError)
+              return
+       }
+       odd, err: = fixInstance.AddFastSettingJob (fixedSetting)
+       if err! = nil {
+              http.Error (w, err.Error (), http.StatusInternalServerError)
+              return
+       }
+ 
+       glog.V (1) .Infof ("[Note] Add FastSetting Job Success:% s", uuid)
+       js, err: = json.Marshal (& createstate.SettingResponse {JobID: uuid})
+       if err! = nil {
+              http.Error (w, err.Error (), http.StatusInternalServerError)
+              return
+       }
+       w.Header (). Set ( "Content-Type", "application/json")
        w.Write(js)
 }
  
@@ -274,7 +274,7 @@ func (this *HttpHandler) GetContainerStatus(w http.ResponseWriter, r *http.Reque
        w.Header().Set("Content-Type", "application/json")
        w.Write(fastSetting)
 }
-
+ 
 func (this *HttpHandler) GetDockerLogs(w http.ResponseWriter, req *http.Request) {
        appName := req.FormValue("name")
        if appName == "" {
@@ -296,7 +296,7 @@ func (this *HttpHandler) GetDockerLogs(w http.ResponseWriter, req *http.Request)
        w.Header().Set("Content-Type", "application/json")
        w.Write(js)
 }
-
+ 
 func (this *HttpHandler) FindVmPoolResource(w http.ResponseWriter, req *http.Request) {
        vmPoolResources, err := g.FindVmPoolResource()
        if err != nil {
@@ -320,7 +320,8 @@ func (this *HttpHandler) GetAppEvents(w http.ResponseWriter, req *http.Request) 
               http.Error(w, "name is null", http.StatusInternalServerError)
               return
        }
-	   var err error
+ 
+       var err error
        var size int64
        if req.FormValue("size") == "" {
               size = 10
@@ -340,7 +341,7 @@ func (this *HttpHandler) GetAppEvents(w http.ResponseWriter, req *http.Request) 
                      size = appevent.MaxEventSize
               }
        }
-	   glog.Infof("GetAppEvents:size=%d", size)
+       glog.Infof("GetAppEvents:size=%d", size)
        events, err := appevent.ListAppEvents(appName, size)
        if nil != err {
               http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -362,7 +363,8 @@ func (this *HttpHandler) GetAppErrorEvents(w http.ResponseWriter, req *http.Requ
               http.Error(w, "name is null", http.StatusInternalServerError)
               return
        }
-	   events, err := appevent.ListAppEvents(appName, appevent.LastErrorEvents)
+ 
+       events, err := appevent.ListAppEvents(appName, appevent.LastErrorEvents)
        if nil != err {
               http.Error(w, err.Error(), http.StatusInternalServerError)
               return
@@ -387,7 +389,7 @@ func (this *HttpHandler) GetAppErrorEvents(w http.ResponseWriter, req *http.Requ
        w.Header().Set("Content-Type", "application/json")
        w.Write(eventjson)
 }
-
+ 
 func (this *HttpHandler) ListArchiveEvents(w http.ResponseWriter, req *http.Request) {
        events, err := ME.ListArchiveEvents()
        if nil != err {
@@ -413,4 +415,3 @@ func (this *HttpHandler) GetSchedulerConfig(w http.ResponseWriter, req *http.Req
        w.Header().Set("Content-Type", "application/json")
        w.Write(jsconfig)
 }
-

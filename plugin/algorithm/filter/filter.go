@@ -21,7 +21,7 @@ func RegionFilter(app *app.App, node *node.Node) (bool, int, error) {
  
        return true, UnDefineMax, nil
 }
-
+ 
 func VMTypeFilter(app *app.App, node *node.Node) (bool, int, error) {
        if app.VMType != "" && app.VMType != node.VMType {
               return false, UnDefineMax, nil
@@ -43,7 +43,7 @@ func CpuFilter(app *app.App, node *node.Node) (bool, int, error) {
        count := nodeFreeVirtCpu / app.CPU
        return true, count, nil
 }
-
+ 
 func VirtMemoryFilter(app *app.App, node *node.Node) (bool, int, error) {
        if app.Memory <= 0 {
               return false, UnDefineMax, fmt.Errorf("app.Memory can not less than 0")
@@ -62,8 +62,8 @@ func RealMemoryFileter(app *app.App, node *node.Node) (bool, int, error) {
        if app.Memory <= 0 {
               return false, UnDefineMax, fmt.Errorf("app.Memory can not less than 0")
        }
-
-if int(node.MemFree) < app.Memory {
+ 
+       if int(node.MemFree) < app.Memory {
               return false, UnDefineMax, nil
        }
  

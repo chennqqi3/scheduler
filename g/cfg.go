@@ -25,7 +25,7 @@ const (
        //scheduler compatible minimum minion version.
        MINION_MINIMUM_VERSION = "1.7.9"
 )
-
+ 
 var (
        config       *GlobalConfig
        configLock   = new(sync.RWMutex)
@@ -51,7 +51,7 @@ type RPCConfig struct {
        Addr string `json:"addr"`
        Port int    `json:"port"`
 }
-
+ 
 // healthcheck options.
 type HealthConfig struct {
        TimeOut  int `json:"timeout"`
@@ -83,7 +83,7 @@ type LogConfig struct {
        LogDir          string `json:"log_dir"`
        Alsologtostderr bool   `json:"alsologtostderr"`
 }
-
+ 
 type RecoveryReport struct {
        Switch      bool   `json:"switch"`
        RestAddress string `json:"restaddress"`
@@ -110,7 +110,7 @@ type GlobalConfig struct {
        MaxDockerExecCount  int                       `json:"maxdockerexeccount"`
        LocalIP             string                    `json:"localIp"`
        BusinessNIC         string                    `json:"businessNIC"`
-Redis               *redisoperate.RedisConfig `json:"redis"`
+       Redis               *redisoperate.RedisConfig `json:"redis"`
        DB                  *DBConfig                 `json:"db"`
        NetService          *Netservice               `json:"netservice"`
        HTTP                *HTTPConfig               `json:"http"`
@@ -123,7 +123,7 @@ Redis               *redisoperate.RedisConfig `json:"redis"`
        Route               *routes.Route             `json:"route"`
        ConsulServer        ConsulConfig              `json:"consulserver"`
        ConsulService       ConsulSvcConfig           `json:"consulservice"`
-	   LogLevel            LogConfig                 `json:"logLevel"`
+       LogLevel            LogConfig                 `json:"logLevel"`
        RecoveryReport      *RecoveryReport           `json:"recoveryreport"`
        MinionMinVersion    *Versions                 `json:"minionminversion"`
 }
@@ -133,7 +133,7 @@ func FlagInit() {
               var c GlobalConfig
               flag.IntVar(&c.Interval, "interval", 5, "scheduler sync interval")
               flag.IntVar(&c.MaxDockerExecCount, "maxdockerexeccount", 2000, "maximum number of concurrent")
-			  flag.StringVar(&c.BusinessNIC, "businessNIC", "eth0", "set the NIC to worked on")
+              flag.StringVar(&c.BusinessNIC, "businessNIC", "eth0", "set the NIC to worked on")
               flag.IntVar(&c.ConfigCheckDuration, "configcheckduration", 5, "the interval to check the config file changes")
  
               //redis
@@ -143,7 +143,7 @@ func FlagInit() {
               flag.BoolVar(&c.Redis.Wait, "redis_wait", true, "redis wait")
  
               //db
-			  c.DB = new(DBConfig)
+              c.DB = new(DBConfig)
               flag.IntVar(&c.DB.MaxIdle, "mysql_maxidle", 100, "max idle connection to mysql")
               flag.IntVar(&c.DB.MaxOpen, "mysql_maxopen", 100, "max active connection to mysql")
               flag.IntVar(&c.DB.MaxLifetime, "mysql_maxlifetime", 300, "connection max lifetime to mysql")
@@ -154,7 +154,7 @@ func FlagInit() {
               flag.IntVar(&c.HTTP.Port, "http_port", 1980, "the network interface port for scheduler http service")
  
               // rpc
-			  c.RPC = new(RPCConfig)
+              c.RPC = new(RPCConfig)
               flag.StringVar(&c.RPC.Addr, "rpc_addr", "0.0.0.0", "the network interface address for scheduler rpc service")
               flag.IntVar(&c.RPC.Port, "rpc_port", 1970, "the network interface port for scheduler rpc service")
  
@@ -169,7 +169,7 @@ func FlagInit() {
               flag.IntVar(&c.Health.MaxTries, "health_maxtries", 20, "the app healthcheck maxtries")
  
               // route
-			  c.Route = new(routes.Route)
+              c.Route = new(routes.Route)
               flag.IntVar(&c.Route.PushInterval, "route_pushinterval", 60, "the route pushinterval")
               var routebackenddriver string
               flag.StringVar(&routebackenddriver, "route_backenddriver", "consul", "the route backendroutedrivers")
@@ -181,22 +181,23 @@ func FlagInit() {
  
               //loglevel
               flag.BoolVar(&c.LogLevel.Alsologtostderr, "log_alsotostderr", false, "whether also print log to stderr")
-			  
-			  // version
+ 
+              // version
               c.MinionMinVersion = new(Versions)
               c.NetService = new(Netservice)
  
               // recovery
               c.RecoveryReport = new(RecoveryReport)
-              flag.BoolVar(&c.RecoveryReport.Switch, "recovery_report_switch", false, "whether report the failure app. " "if this is set to \"true\", then flag \"-recovery_report_restaddr\" must be configured with an available url.")
-			  flag.StringVar(&c.RecoveryReport.RestAddress, "recovery_report_restaddr", "", "where to report the failure app, it's a url")
+              flag.BoolVar(&c.RecoveryReport.Switch, "recovery_report_switch", false, "whether report the failure app. "+
+                     "if this is set to \"true\", then flag \"-recovery_report_restaddr\" must be configured with an available url.")
+             flag.StringVar(&c.RecoveryReport.RestAddress, "recovery_report_restaddr", "", "where to report the failure app, it's a url")
  
               configLock.Lock()
               defer configLock.Unlock()
               config = &c
        })
 }
-
+ 
 // add any necessary config check here
 func (c *GlobalConfig) CheckDefault() {
        if c.Interval < 3 {
@@ -219,8 +220,7 @@ func (c *GlobalConfig) CheckDefault() {
               c.Redis.MaxIdle = 100
               glog.Warning("redis_maxidle can not less than 100, set redis_maxidle=100")
        }
-	   
-	   if c.Redis.MaxActive < 600 {
+       if c.Redis.MaxActive < 600 {
               c.Redis.MaxActive = 600
               glog.Warning("redis_maxactive can not less than 600, set redis_maxactive=600")
        }
@@ -244,8 +244,8 @@ func (c *GlobalConfig) CheckDefault() {
               c.SignMsg.Interval = 300
               glog.Warning("signmsg_interval can not less than 300, set signmsg_interval=300")
        }
-	   
-	   //health
+ 
+       //health
        if c.Health.TimeOut < 10 {
               c.Health.TimeOut = 10
               glog.Warning("health_timeout can not less than 10, set health_timeout=10")
@@ -264,8 +264,8 @@ func (c *GlobalConfig) CheckDefault() {
               c.Route.PushInterval = 30
               glog.Warning("route_pushinterval can not less than 30, set route_pushinterval=30")
        }
-	   
-	   //consulServer
+ 
+       //consulServer
        if c.ConsulServer.UpdateCtnrInterval < 60 {
               c.ConsulServer.UpdateCtnrInterval = 60
               glog.Warning("consul_updateinterval can not less than 60, set consul_updateinterval=60")
@@ -291,7 +291,7 @@ func PrintlnAndReturnErr(errormessage string) error {
        glog.Error(errormessage)
        return errors.New(errormessage)
 }
-
+ 
 // ParseConfig parse config file.
 func ParseConfig(cfg string) error {
        configLock.Lock()
@@ -312,8 +312,8 @@ func ParseConfig(cfg string) error {
        if err != nil {
               return PrintlnAndReturnErr(fmt.Sprintf("read config  file fail: %v ", err))
        }
-
-// pick the fields we need from configuration file
+ 
+       // pick the fields we need from configuration file
        var c GlobalConfig
        err = json.Unmarshal([]byte(configContent), &c)
        if err != nil {
@@ -336,8 +336,8 @@ func ParseConfig(cfg string) error {
        config.DB.Dsn = c.DB.Dsn
        config.DB.UserName = c.DB.UserName
        config.DB.Password = c.DB.Password
-	   
-	   config.ConsulServer.ConsulAddress = c.ConsulServer.ConsulAddress
+ 
+       config.ConsulServer.ConsulAddress = c.ConsulServer.ConsulAddress
        config.ConsulServer.ConsulDatacenter = c.ConsulServer.ConsulDatacenter
        config.ConsulServer.CtnrToken = c.ConsulServer.CtnrToken
        config.ConsulServer.ConsulRoutePath = c.ConsulServer.ConsulRoutePath
@@ -346,8 +346,8 @@ func ParseConfig(cfg string) error {
        config.LogLevel.LogDir = c.LogLevel.LogDir
        config.LogLevel.Verbose = c.LogLevel.Verbose
        // end of picking
-
-flag.Lookup("Halsologtostderr").Value.Set(strconv.FormatBool(config.LogLevel.Alsologtostderr))
+ 
+       flag.Lookup("Halsologtostderr").Value.Set(strconv.FormatBool(config.LogLevel.Alsologtostderr))
        flag.Lookup("Hv").Value.Set(strconv.Itoa(config.LogLevel.Verbose))
        if config.LogLevel.LogDir != "" {
               flag.Lookup("Hlog_dir").Value.Set(config.LogLevel.LogDir)
@@ -366,7 +366,7 @@ flag.Lookup("Halsologtostderr").Value.Set(strconv.FormatBool(config.LogLevel.Als
        if c.ConsulServer.ConsulRoutePath == "" {
               return PrintlnAndReturnErr("app consul route path can not be empty.")
        }
-if c.ConsulServer.ConsulCtnrPath == "" {
+       if c.ConsulServer.ConsulCtnrPath == "" {
               return PrintlnAndReturnErr("app consul container publish path can not be empty.")
        }
  
@@ -387,8 +387,7 @@ func DyncCfg(cfg string) error {
        if !file.IsExist(cfg) {
               return PrintlnAndReturnErr(fmt.Sprintf("config file: %v is not existent", cfg))
        }
-	   
-	   configContent, err := file.ToTrimString(cfg)
+       configContent, err := file.ToTrimString(cfg)
        if err != nil {
               return PrintlnAndReturnErr(fmt.Sprintf("read config  file fail: %v ", err))
        }
@@ -414,7 +413,7 @@ func DyncCfg(cfg string) error {
        }
        return nil
 }
-
+ 
 func WatchFile(file string) {
        preStat, err := os.Stat(file)
        if err != nil {
@@ -439,7 +438,7 @@ func WatchFile(file string) {
               time.Sleep(time.Duration(Config().ConfigCheckDuration) * time.Second)
        }
 }
-
+ 
 // if you use this function, please do assure that netClient is valid,
 // please use this function along with Config().NetService.Switch switch.
 func NetClient() *netservice.Client {
@@ -457,5 +456,3 @@ func NewNetClient() error {
        }
        return nil
 }
-
- 

@@ -25,7 +25,7 @@ const (
 var (
        routerInstance Route
 )
-
+ 
 func StartRouterDrv() error {
        cfg := &routedrivers.ConsulConfig{
               ConsulAddress:    g.Config().ConsulServer.ConsulAddress,
@@ -39,9 +39,9 @@ func StartRouterDrv() error {
               g.RedisConnPool,
               g.RealState)
        if nil != err {
-              return errors.New("start route driver error: "   err.Error())
+              return errors.New("start route driver error: " + err.Error())
        }
-	   drv.UpdateRouteBackendDrivers(g.Config().Route.BackendRouteDrivers)
+       drv.UpdateRouteBackendDrivers(g.Config().Route.BackendRouteDrivers)
  
        pool, poolerr := TP.NewTaskPool(200)
        if nil != poolerr {
@@ -56,8 +56,9 @@ func StartRouterDrv() error {
               failoverChan:           make(chan []byte, chanCap),
               fastSettingSuccessChan: make(chan []byte, chanCap),
        }
-	   if err = routerInstance.registerEventsToME(); err != nil {
-              return errors.New("router register to events center error: "   err.Error())
+ 
+       if err = routerInstance.registerEventsToME(); err != nil {
+              return errors.New("router register to events center error: " + err.Error())
        }
        go routerInstance.waitEvents()
        go routerInstance.routerDrv.TimePushTotalData()
@@ -72,7 +73,7 @@ type Route struct {
        failoverChan           chan []byte
        fastSettingSuccessChan chan []byte
 }
-
+ 
 func (rt *Route) waitEvents() {
        for {
               select {
@@ -92,7 +93,7 @@ func (rt *Route) waitEvents() {
                      if len(val.App.Health) == 0 {
                             continue
                      }
-					 ctnrRoutes := []*routes.ContainerRoute{}
+                     ctnrRoutes := []*routes.ContainerRoute{}
                      for _, container := range val.Containers {
                             ctnrRoute := routes.GenerateRouteData(&container)
                             if ctnrRoute != nil {
@@ -104,7 +105,8 @@ func (rt *Route) waitEvents() {
                                    glog.Errorf("Add router for app %s error: %s", val.App.Name, err.Error())
                             }
                      })
-					 case dat := <-rt.appDeletedChan:
+ 
+              case dat := <-rt.appDeletedChan:
                      val := ME.DeleteContainersBecauseTheAppItBelongsWasDeletedData{}
                      if err := json.Unmarshal(dat, &val); nil != err {
                             glog.Error(err)
@@ -122,8 +124,8 @@ func (rt *Route) waitEvents() {
                             glog.Error(err)
                             continue
                      }
-					 val.Container.Status = realstate.ContainerStatusDown
-                     for i := 0; i < len(val.Container.PortInfos); i   {
+                     val.Container.Status = realstate.ContainerStatusDown
+                     for i := 0; i < len(val.Container.PortInfos); i++ {
                             if val.Container.PortInfos[i].Portname == realstate.PublicPortName {
                                    val.Container.PortInfos[i].Ports = nil
                                    break
@@ -132,7 +134,7 @@ func (rt *Route) waitEvents() {
                      ctnrRoutes := []*routes.ContainerRoute{}
                      containers := g.RealState.Containers(val.Container.AppName)
                      containers = append(containers, &val.Container)
-					 for _, container := range containers {
+                     for _, container := range containers {
                             ctnrRoute := routes.GenerateRouteData(container)
                             if ctnrRoute != nil {
                                    ctnrRoutes = append(ctnrRoutes, ctnrRoute)
@@ -146,7 +148,8 @@ func (rt *Route) waitEvents() {
                                    glog.Errorf("UpdateRoutes failed. Error: %v", err)
                             }
                      })
-					 case dat := <-rt.fastSettingSuccessChan:
+ 
+              case dat := <-rt.fastSettingSuccessChan:
                      val := ME.FastSettingSuccessData{}
                      if err := json.Unmarshal(dat, &val); nil != err {
                             glog.Error(err)
@@ -160,7 +163,7 @@ func (rt *Route) waitEvents() {
                      if app.AppType == storageapp.AppTypeLRVM {
                             continue
                      }
-					 rt.task.Execute(func() {
+                     rt.task.Execute(func() {
                             update := func() bool {
                                    ctnrRoutes := []*routes.ContainerRoute{}
                                    for _, container := range g.RealState.Containers(val.AppName) {
@@ -185,7 +188,7 @@ func (rt *Route) waitEvents() {
                                                  ctnrRoutes = append(ctnrRoutes, ctnrRoute)
                                           }
                                    }
-								   if err := rt.routerDrv.UpdateRoutes(val.AppName, ctnrRoutes); nil != err {
+                                   if err := rt.routerDrv.UpdateRoutes(val.AppName, ctnrRoutes); nil != err {
                                           glog.Errorf("UpdateRoutes failed. Error: %v", err)
                                    }
                                    return true
@@ -198,7 +201,7 @@ func (rt *Route) waitEvents() {
               }
        }
 }
-
+ 
 func (rt *Route) registerEventsToME() error {
        userstarted := &ME.User{
               EventID:     ME.AppStatusToStarted,
@@ -219,7 +222,24 @@ func (rt *Route) registerEventsToME() error {
        if _, err := ME.RegisterEvent(userdelapp, &rt.appDeletedChan); err != nil {
               return err
        }
-	   userfailover := &ME.User{
+ 
+       userfailover := &ME.User{
+              EventID:     ME.Failover,
+              RequireData: true,
+              Drop:        false,
+              Description: "router discover model",
+       }
+       if _, err := ME.RegisterEvent(userfailover, &rt.failoverChan); err != nil {
+              return err
+       }
+ 
+       userfastsetting := &ME.User{
+              EventID:     ME.FastSettingSuccess,
+              RequireData: true,
+              Drop:        false,
+              Description: "router discover model",
+       }
+       if _, err := ME.User{
               EventID:     ME.Failover,
               RequireData: true,
               Drop:        false,

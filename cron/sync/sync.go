@@ -23,7 +23,7 @@ type SyncProvider interface {
        CheckStale(timeSecond int)
        RequireResource(timeSecond int)
 }
-
+ 
 type SyncState struct {
        CreatingState realstate.DockerRunStatusProvider
        Config        ConfigFunc
@@ -39,7 +39,7 @@ func NewSyncState(
        creatingState realstate.DockerRunStatusProvider,
        configfunc ConfigFunc,
        algo *algorithm.Config,
-	   ) SyncProvider {
+) SyncProvider {
        var syncType = map[string]SchedulerProvider{
               appStorage.AppTypeLRC: NewContainerManager(
                      g.RealState,
@@ -49,7 +49,7 @@ func NewSyncState(
                      algo,
                      g.UpdateAppStatusByName,
               ),
-			  appStorage.AppTypeSRC: NewContainerOOTManager(
+              appStorage.AppTypeSRC: NewContainerOOTManager(
                      g.RealState,
                      creatingState,
                      g.RealNodeState,
@@ -70,7 +70,7 @@ func NewSyncState(
                      g.GetRegionByNode,
               )
        }
-	   taskdrv, err := realstate.NewTaskHandler(g.RedisConnPool)
+       taskdrv, err := realstate.NewTaskHandler(g.RedisConnPool)
        if nil != err {
               glog.Fatal("Create task handler failed. Error: ", err)
        }
@@ -89,7 +89,7 @@ func NewSyncState(
               flowpool:      pool,
        }
 }
-
+ 
 type InProgress struct {
        InProgressApp map[string]int64
        lock          sync.Mutex
@@ -110,8 +110,7 @@ func (s *SyncState) acquire(appname string) error {
        if exists && time.Now().Unix()-value < syncExecTimeOut {
               return fmt.Errorf("appname: %s is in progress", appname)
        }
-
-appInProgress.InProgressApp[appname] = time.Now().Unix()
+       appInProgress.InProgressApp[appname] = time.Now().Unix()
        s.sem <- struct{}{}
        return nil
 }
@@ -133,7 +132,7 @@ func (s *SyncState) Sync(timeSecond int) {
                      s.maintenance()
                      continue
               }
-			  // normal mode
+              // normal mode
               desiredState, err := g.GetDesiredState()
               if err != nil {
                      glog.Error("get desired state fail: ", err)
@@ -152,8 +151,7 @@ func (s *SyncState) syncAppTask(app *appStorage.App) {
               glog.Warningf("acquire channel for desirestate fail: %v", err)
               return
        }
-
-go func(app appStorage.App) {
+       go func(app appStorage.App) {
               defer s.release(app.Name)
               provider, exist := s.SyncType[app.AppType]
               if !exist {
@@ -168,7 +166,7 @@ go func(app appStorage.App) {
               }
               if g.RealState.RealAppExists(app.Name) {
                      err := s.appContext.GetUpdateAppContext(&app).UpdateContainers(provider, &app)
-					 if err != nil {
+                     if err != nil {
                             glog.Errorf("app %s update fail: %v", app.Name, err)
                      }
                      return
@@ -186,7 +184,7 @@ func (s *SyncState) sync(desiredState *map[string]*appStorage.App) {
        realNames := g.RealState.Keys()
        for _, name := range realNames {
               _, exist := (*desiredState)[name]
-			  if !exist {
+              if !exist {
                      ctnrs := g.RealState.Containers(name)
                      if len(ctnrs) < 1 {
                             continue
@@ -201,7 +199,7 @@ func (s *SyncState) sync(desiredState *map[string]*appStorage.App) {
                             ME.DeleteContainersBecauseTheAppItBelongsWasDeletedData{
                                    AppName:    name,
                                    Containers: containers,
-								   Message:    fmt.Sprintf("App %v was delete by user, delete Containers to --> container count: %v", name, len(containers)),
+                                   Message:    fmt.Sprintf("App %v was delete by user, delete Containers to --> container count: %v", name, len(containers)),
                             })
  
                      container := ctnrs[0]
@@ -216,7 +214,8 @@ func (s *SyncState) sync(desiredState *map[string]*appStorage.App) {
                      }
               }
        }
-	   realNamesInCreatingStatus, err := s.CreatingState.GetAllCreatingStatus()
+ 
+       realNamesInCreatingStatus, err := s.CreatingState.GetAllCreatingStatus()
        if err != nil {
               glog.Error("CreatingState.GetAllCreatingStatus fail: ", err)
               return
@@ -235,7 +234,7 @@ func (s *SyncState) sync(desiredState *map[string]*appStorage.App) {
               }
        }
 }
-
+ 
 func (s *SyncState) maintenance() {
        glog.Infof("################################ MAINT ################################")
        desiredState, err := g.GetDesiredState()
@@ -248,7 +247,7 @@ func (s *SyncState) maintenance() {
               _, exist := s.SyncType[app.AppType]
               if !exist {
                      glog.Errorf("app type: '%s' do not match anything", app.AppType)
-					 g.UpdateAppStatusByName(app.Name, appStorage.AppStatusSchedulerTypeFail, "app status scheduler type fail")
+                     g.UpdateAppStatusByName(app.Name, appStorage.AppStatusSchedulerTypeFail, "app status scheduler type fail")
                      continue
               }
  
@@ -263,7 +262,8 @@ func (s *SyncState) maintenance() {
                             if UpdateCompareFunc(app, c) {
                                    glog.Debugf("app name:%s need to be upgraded", name)
                             }
-							// check container health status
+ 
+                            // check container health status
                             if realstate.CTNR_HEALTH_ALIVE != c.HealthMode {
                                    glog.Debugf("health check container id:%s failed. appname:%s, health mode:%s.",
                                           c.ID, c.AppName, c.HealthMode)
@@ -282,7 +282,7 @@ func (s *SyncState) maintenance() {
                      if len(ctnrs) < 1 {
                             continue
                      }
-					 glog.Debugf("app name:%s has been deleted, need to drop its %d containers", name, len(ctnrs))
+                     glog.Debugf("app name:%s has been deleted, need to drop its %d containers", name, len(ctnrs))
               }
        }
 }
@@ -299,7 +299,7 @@ func (s *SyncState) CheckStale(timeSecond int) {
                      // wait for 1 minute to start handle stale node and container.
                      glog.Warning("check stale model change from maint mode to normal mode, start sleep for a while for time reason.")
                      time.Sleep(time.Duration(4*timeSecond) * time.Second)
-					 glog.Warning("check stale model awake from sleep, and start working.")
+                     glog.Warning("check stale model awake from sleep, and start working.")
               }
  
               if historyMode != mode {
@@ -322,7 +322,8 @@ func (s *SyncState) checkStale() {
        for _, deleteNodeIP := range deleteNodeIPs {
               g.DeleteContainerByIP(deleteNodeIP)
        }
-	   deleteContainers := g.RealState.GetStableContainers(before)
+ 
+       deleteContainers := g.RealState.GetStableContainers(before)
        for name, containers := range deleteContainers {
               TimeOutContainers := make([]*realstate.Container, 0)
               for _, container := range containers {
@@ -339,7 +340,7 @@ func (s *SyncState) checkStale() {
               }
               deleteContainers[name] = TimeOutContainers
        }
-	   g.ProcessStaleContainers(deleteContainers)
+       g.ProcessStaleContainers(deleteContainers)
 }
  
 func (s *SyncState) RequireResource(timeSecond int) {
@@ -365,7 +366,7 @@ func (s *SyncState) requireResource() {
               provider, exist := s.SyncType[app.AppType]
               if !exist {
                      glog.Errorf("apptype: '%s' do not match anything", app.AppType)
-					 g.UpdateAppStatusByName(app.Name, appStorage.AppStatusSchedulerTypeFail, "app status scheduler type fail")
+                     g.UpdateAppStatusByName(app.Name, appStorage.AppStatusSchedulerTypeFail, "app status scheduler type fail")
                      continue
               }
  
@@ -383,7 +384,7 @@ func (s *SyncState) requireResource() {
               }
        }
 }
-
+ 
 func (s *SyncState) HealthCheck(timeSecond int) {
        go s.networkResourceHealthCheck()
        duration := time.Duration(timeSecond) * time.Second
@@ -410,7 +411,7 @@ func (s *SyncState) healthCheck() {
                      continue
               }
               s.flowpool.Require()
-			  go func(app appStorage.App) {
+              go func(app appStorage.App) {
                      defer s.flowpool.Release()
                      provider, exist := s.SyncType[app.AppType]
                      if !exist {
@@ -424,7 +425,7 @@ func (s *SyncState) healthCheck() {
                                    Reason:   "health check failed",
                                    AppName:  app.Name,
                                    Error:    err.Error(),
-								   Birthday: time.Now(),
+                                   Birthday: time.Now(),
                                    Message:  fmt.Sprintf("App %v Health check fail  --> %v", app.Name, err),
                             })
                      }
@@ -450,7 +451,7 @@ func (s *SyncState) networkResourceHealthCheck() {
                             glog.Debug("Unexpected result from g.GetOrphanNetworkApps")
                             continue
                      }
-					 apply := netservice.Applicants{
+                     apply := netservice.Applicants{
                             Hostname:  oneApp.Hostnames[0].Hostname,
                             Subdomain: oneApp.Hostnames[0].Subdomain,
                             Region:    oneApp.Region,

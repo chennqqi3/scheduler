@@ -26,8 +26,7 @@ var _ = Describe("Ctnrpublish suite test",func(){
               containers []realstate.Container
               birthday time.Time = time.Now()
        )
-
-newRedisPool := func(server, password string) *redis.Pool {
+       newRedisPool := func(server, password string) *redis.Pool {
               return &redis.Pool{
                      MaxIdle:     5,
                      IdleTimeout: 240 * time.Second,
@@ -46,7 +45,7 @@ newRedisPool := func(server, password string) *redis.Pool {
                                           c.Close()
                                           return nil, err
                                    }
-								   realPassword, err := myaes.Decrypt(password)
+                                   realPassword, err := myaes.Decrypt(password)
                                    if err != nil {
                                           c.Close()
                                           return nil, err
@@ -68,8 +67,8 @@ newRedisPool := func(server, password string) *redis.Pool {
                      },
               }
        }
-	   
-	   consulGetContainers := func(appName string) (*[]realstate.Container,error) {
+ 
+       consulGetContainers := func(appName string) (*[]realstate.Container,error) {
               cfg := ctnrpub.ConsulPubConfig{
                      Address:       Config().ConsulServer.ConsulAddress,
                      Scheme:        Config().ConsulServer.ConsulScheme,
@@ -88,16 +87,16 @@ newRedisPool := func(server, password string) *redis.Pool {
  
               return ctnrs,nil             
        }
-	   
-	   randomStr := func(prefix string,ls int) string{
+ 
+       randomStr := func(prefix string,ls int) string{
               str := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
               bytes := []byte(str)
               result := []byte{}
               r := rand.New(rand.NewSource(time.Now().UnixNano()))
-              for i :=0;i < ls; i   {
+              for i :=0;i < ls; i++ {
                      result = append(result,bytes[r.Intn(len(bytes))])
               }
-              return prefix string(result)
+              return prefix+string(result)
        }
  
        BeforeEach(func(){
@@ -108,7 +107,7 @@ newRedisPool := func(server, password string) *redis.Pool {
                      Instance: 1,
                      Image: storageapp.Image{
                             DockerImageURL:    "9.91.17.17:5000/huangcuiyang/dls",
-							DockerLoginServer: "",
+                            DockerLoginServer: "",
                             DockerUser:        "",
                             DockerPassword:    "",
                             DockerEmail:       "huangcuiyang@huawei.com",
@@ -128,8 +127,7 @@ newRedisPool := func(server, password string) *redis.Pool {
                      },
               }
        })
-	   
-	   AfterEach(func(){
+       AfterEach(func(){
  
        })
  
@@ -152,7 +150,7 @@ newRedisPool := func(server, password string) *redis.Pool {
                      fmt.Printf("Error Start MsgEngine,%v\n",err)
                      Fail("Started MsgEngine failed")
               }
-			  switchChan <- false
+              switchChan <- false
               // started CtnrPublisher
               err = StartCtnrPublisher()
               if err != nil {
@@ -175,28 +173,29 @@ newRedisPool := func(server, password string) *redis.Pool {
                             portinfos := []realstate.PortInfo{
                                    {
                                           Portname: realstate.PublicPortName,
-                                          Ports: []docker.PortBinding{
-                                                 {		HostIP: "127.0.0.1",
-                                                        HostPort: "60000",
-                                                 },
-                                          },
-                                          OriginPort: "8080",
-                                   },
-                            }
-                            for k,_ := range containers {
-                                   containers[k].PortInfos = portinfos
-                            }
-                            //
- 
-                            // make msg infos
-                            msg := ME.AppStatusToStartedData{
-                                   App: app,
-                                   Containers: containers,
-                                   Birthday: birthday,
+                                          Ports: [] {docker.PortBinding
+                                                 {
+                                                        HostIP: "127.0.0.1"
+                                                        HostPort: "60000",
+                                                 },
+                                          },
+                                          OriginPort: "8080",
+                                   },
+                            }
+                            for k, _ range = {containers
+                                   containers [k] = .PortInfos portinfos
+                            }
+                            //
+ 
+                            // make msg infos
+                            msg = {ME.AppStatusToStartedData
+                                   App: App,
+                                   Containers: containers,
+                                   Birthday: birthday,
                                    Message: "test",
                             }
-                            // send App started event
-							ME.NewEventReporter(ME.AppStatusToStarted,msg)
+                            // send App started event                        
+                            ME.NewEventReporter(ME.AppStatusToStarted,msg)
                             time.Sleep(time.Second * waitTime)
                             // check consul data
                             results,err := consulGetContainers(app.Name)
@@ -209,7 +208,7 @@ newRedisPool := func(server, password string) *redis.Pool {
                                           if result.ID == container.ID {
                                                  flag = false
                                                  Expect(result.IP).To(Equal(container.IP))
-												 Expect(result.AppName).To(Equal(container.AppName))
+                                                 Expect(result.AppName).To(Equal(container.AppName))
                                                  // Expect(result.Status).To(Equal(container.Status))
                                                  Expect(result.PortInfos).To(Equal(container.PortInfos))
                                                  break
@@ -223,8 +222,8 @@ newRedisPool := func(server, password string) *redis.Pool {
                      By("Delete Containers to consul",func(){
                             // send App update event
                             msg := ME.DeleteContainersBecauseTheAppItBelongsWasDeletedData {
-								   AppName: app.Name,
-								   Containers: containers,
+                                   AppName: app.Name,
+                                   Containers: containers,
                                    Message: "test",
                             }
                             ME.NewEventReporter(ME.DeleteContainersBecauseTheAppItBelongsWasDeleted,msg)

@@ -22,7 +22,7 @@ import (
 type ContainerOOTManager struct {
        SyncController
 }
-
+ 
 func NewContainerOOTManager(
        realState g.ContainerRealState,
        creatingState realstate.DockerRunStatusProvider,
@@ -47,7 +47,8 @@ func (c *ContainerOOTManager) StatusCompare(app *appStorage.App) error {
        if app == nil {
               return errors.New("app is nil")
        }
-	   //Status Arrangement
+ 
+       //Status Arrangement
        switch app.Status {
        case appStorage.AppStatusPending:
               finish := func(status *realstate.DockerStatusStore) error {
@@ -63,8 +64,8 @@ func (c *ContainerOOTManager) StatusCompare(app *appStorage.App) error {
                                    glog.Warningf("virNode is not exist, IP: %s", node.IP)
                                    continue
                             }
-							virNode.CPUVirtUsage = virNode.CPUVirtUsage   node.Cpu
-                            virNode.MemVirtUsage = virNode.MemVirtUsage   node.Memory
+                            virNode.CPUVirtUsage = virNode.CPUVirtUsage + node.Cpu
+                            virNode.MemVirtUsage = virNode.MemVirtUsage + node.Memory
                             g.RealNodeState.UpdateNode(virNode)
                      }
                      return nil
@@ -81,10 +82,10 @@ func (c *ContainerOOTManager) StatusCompare(app *appStorage.App) error {
               count := 0
               for _, ctnr := range ctnrs {
                      if strings.Contains(ctnr.Status, realstate.ContainerStatusExited) || strings.Contains(ctnr.Status, realstate.ContainerStatusDown) {
-                            count  
+                            count++
                      }
               }
-			  if count != 0 && count == app.Instance {
+              if count != 0 && count == app.Instance {
                      glog.Infof("app(OOT) is At the end of the run, name: %s", app.Name)
                      c.UpdateAppStatus(app, appStorage.AppStatusCMDExit, "app status CMD exit")
               }
@@ -105,7 +106,7 @@ func (c *ContainerOOTManager) createSomeContainers(app *appStorage.App, num int)
               if num == 0 {
                      return nil
               }
-			  glog.Infof("CreateContainers, name: %s, num: %d", app.Name, num)
+              glog.Infof("CreateContainers, name: %s, num: %d", app.Name, num)
               ipCount, err := c.Algo.Algorithm.Schedule(app, num)
               if err != nil {
                      glog.Error("Algorithm.Schedule error: ", err)
@@ -120,8 +121,8 @@ func (c *ContainerOOTManager) createSomeContainers(app *appStorage.App, num int)
                      return err
               }
               if num == app.Instance {
-                            ME.NewEventReporter(ME.StartToCreateApp,
-							ME.StartToCreateAppData{
+                     ME.NewEventReporter(ME.StartToCreateApp,
+                            ME.StartToCreateAppData{
                                    App:      *app,
                                    Birthday: time.Now(),
                                    Message:  fmt.Sprintf("App %v Begin to Create %v Containers --> %v", app.Name, app.Instance, app.Image.DockerImageURL),
@@ -137,8 +138,8 @@ func (c *ContainerOOTManager) createSomeContainers(app *appStorage.App, num int)
                             glog.Warningf("virNode is not exist, IP: %s", node.IP)
                             continue
                      }
-					 virNode.CPUVirtUsage = virNode.CPUVirtUsage   node.Cpu
-                     virNode.MemVirtUsage = virNode.MemVirtUsage   node.Memory
+                     virNode.CPUVirtUsage = virNode.CPUVirtUsage + node.Cpu
+                     virNode.MemVirtUsage = virNode.MemVirtUsage + node.Memory
                      g.RealNodeState.UpdateNode(virNode)
               }
               return nil
@@ -150,7 +151,7 @@ func (c *ContainerOOTManager) createSomeContainers(app *appStorage.App, num int)
 func (c *ContainerOOTManager) UpdateContainers(app *appStorage.App) error {
        return nil
 }
-
+ 
 func (c *ContainerOOTManager) DropContainers(appName string, appInstance int, containers []*realstate.Container) error {
        callBack := func() error {
               glog.Warningf("DropContainers, name: %s, num: %d", appName, len(containers))
@@ -171,18 +172,18 @@ func (c *ContainerOOTManager) DropContainers(appName string, appInstance int, co
        err := c.CreatingStatus(appName, appInstance, len(containers), callBack, finish)
        return err
 }
-
+ 
 func (c *ContainerOOTManager) runContainers(app *appStorage.App, ipCount map[string]int) {
        name := func() string {
               if id := uuid.GetGuid(); 13 <= len(id) {
-                     return id[0:13]   "_"   app.Name
+                     return id[0:13] + "_" + app.Name
               } else {
-                     return id   "_"   app.Name
+                     return id + "_" + app.Name
               }
        }
        for selectNodeIP, count := range ipCount {
               nodeAppDeployInfo := &node.NodeAppDeployInfo{App: app}
-              for k := 0; k < count; k   {
+              for k := 0; k < count; k++ {
                      deployNode := &node.DeployInfo{
                             AgentIP:  selectNodeIP,
                             Ctnrname: name(),
@@ -193,7 +194,7 @@ func (c *ContainerOOTManager) runContainers(app *appStorage.App, ipCount map[str
        }
        return
 }
-
+ 
 func (c *ContainerOOTManager) RequireResource(app *appStorage.App) error {
        err := c.UpdateAppStatus(app, appStorage.AppStatusPending, "")
        if err != nil {
@@ -215,7 +216,7 @@ func (c *ContainerOOTManager) healthCheckOneContainer(container *realstate.Conta
                      glog.Errorf("increase health check tries error: %s", err.Error())
                      return
               }
-			  if tries > c.Config().Health.MaxTries {
+              if tries > c.Config().Health.MaxTries {
                      errInfo := fmt.Sprintf("delete container due to health check failed to many times, id: %s, appname: %s, ip: %s",
                             container.ID, container.AppName, container.IP)
                      ME.NewEventReporter(ME.ExecResult, ME.ExecResultData{
@@ -229,7 +230,7 @@ func (c *ContainerOOTManager) healthCheckOneContainer(container *realstate.Conta
                      if err := g.HealthCheckTries.Delete(container); err != nil {
                             glog.Errorf("delete health check tries error: %s", err.Error())
                      }
-					 c.DropOneContainer(container)
+                     c.DropOneContainer(container)
                      glog.Errorf(errInfo)
               }
        }()
@@ -252,6 +253,7 @@ func (c *ContainerOOTManager) healthCheckOneContainer(container *realstate.Conta
        }
  
 }
+ 
 func (c *ContainerOOTManager) HealthCheck(app *appStorage.App) error {
        if !c.RealState.RealAppExists(app.Name) {
               return fmt.Errorf("real state do not exist for app: %s", app.Name)
@@ -271,7 +273,7 @@ func (c *ContainerOOTManager) HealthCheck(app *appStorage.App) error {
  
               if len(containers) == passed || len(app.Health) == 0 {
                      glog.Infof("health check success, name: %s, update status to %s", app.Name, appStorage.AppStatusStartSuccess)
-					 err := c.UpdateAppStatus(app, appStorage.AppStatusStartSuccess, "")
+                     err := c.UpdateAppStatus(app, appStorage.AppStatusStartSuccess, "")
                      if err != nil {
                             glog.Errorf("update app: %s status to: %s fail: %v", app.Name, appStorage.AppStatusStartSuccess, err)
                             return err
@@ -285,7 +287,7 @@ func (c *ContainerOOTManager) HealthCheck(app *appStorage.App) error {
                             ME.AppStatusToStartedData{
                                    App:        *app,
                                    Containers: ctnrs,
-								   Birthday:   time.Now(),
+                                   Birthday:   time.Now(),
                                    Message:    fmt.Sprintf("App %v Health Check Success  --> Check %v Containers", app.Name, passed),
                             })
               }

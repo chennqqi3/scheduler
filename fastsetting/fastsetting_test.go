@@ -38,30 +38,31 @@ var _ = Describe("Fastsetting", func() {
               myfastSettingJobPrefix = "hipaas_fastsetting_job_"
               myfastSettingJobQueue  = "hipaas_fastsetting_job"
        )
-randomstr := func(prefix string,lns int) string{
+ 
+       randomstr := func(prefix string,lns int) string{
               str := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
               bytes := []byte(str)
               result := []byte{}
               r := rand.New(rand.NewSource(time.Now().UnixNano()))
-              for i :=0;i < lns; i   {
+              for i :=0;i < lns; i++ {
                      result = append(result,bytes[r.Intn(len(bytes))])
               }
-              return prefix string(result)
+              return prefix+string(result)
        }
  
        // prepare actions
        g.FlagInit()
        err = g.ParseConfig("../cfg.example.json")
        if err != nil {
-              Fail("g.ParseConfig fail: " err.Error())
+              Fail("g.ParseConfig fail: "+err.Error())
        }
        redisPool,err := redisoperate.InitRedisConnPool(g.Config().Redis)
        if err != nil {
-              Fail("redisoperate.InitRedisConnPool fail: " err.Error())
+              Fail("redisoperate.InitRedisConnPool fail: "+err.Error())
        }
-	   realState, err := realstate.NewSafeRealState(driver, redisPool)
+       realState, err := realstate.NewSafeRealState(driver, redisPool)
        if err != nil {
-              Fail("realstate.NewSafeRealState fail: " err.Error())
+              Fail("realstate.NewSafeRealState fail: "+err.Error())
        }
        myfastSettingMainDriver = NewFastsetting(redisPool, realState)
  
@@ -77,49 +78,50 @@ randomstr := func(prefix string,lns int) string{
                      Hostname:  "cloud.huawei.com",
                      Region:    "Net67",
                      VMType:    "was",
-					 CPU:       1,
+                     CPU:       1,
                      Memory:    128,
-                     PortInfos: []realstate.PortInfo{realstate.PortInfo{Portname: "public", Ports: []docker.PortBinding{docker.PortBinding{HostIP: "10.63.67.130", HostPort: "3128"}}, OriginPort: "8080"}},
-                     AppType:   "LRP",
-                     Envs:      []storageapp.Env{storageapp.Env{K: "gopath", V: "/home/go"}},
-              }
-              realState.UpdateContainer(c)
-       })
-       AfterEach(func() {
-              realState.DeleteContainer(c.AppName, c)
-       })
-       Describe("AddFastSettingJob",func () {
-              var fs *fastsetting.FastSetting
-              var ctnrs []*realstate.Container
-              var jid string
- 
-              JustBeforeEach(func () {
-                     fs = &fastsetting.FastSetting{
-                            AppName: c.AppName,
-                            OperateType: fastsetting.Normal,
-                     }
-					 ctnrs = realState.Containers(c.AppName) 
-                     for _,ctnr := range ctnrs {
-                            fs.Containers = append(fs.Containers,fastsetting.CtnrStatus{ID: ctnr.ID, Status: fastsetting.Normal})
-                     }     
-              })
-              AfterEach(func () {
-                     // delete job
-                     if jid != "" {
-                            rc := redisPool.Get()
-                            tmpKey := fmt.Sprintf("%s%s",myfastSettingJobPrefix,jid)
-                            rc.Do("DEL",tmpKey)
-                            rc.Do("RPOP",myfastSettingJobQueue)
-                            rc.Close()
- 
-                     }
-              })
-			  It("When OperateType is not support",func () {
-                     fs.OperateType = "notsupportType"
- 
-                     jid,err = myfastSettingMainDriver.AddFastSettingJob(fs)
-                     Expect(err).To(HaveOccurred())
-                     Expect(jid).To(Equal(""))
+                     PortInfos: []realstate.PortInfo{realstate.PortInfo {Scanner: "public", Ports: [] docker.PortBinding docker.PortBinding {{HostIP: "10.63.67.130", HostPort: "3128"}}, OriginPort: "8080"}},
+                     APPTYPE: "LRP"
+                     NVS: [] storageapp.Env storageapp.Env {{K: "gopath" V "/ home / go"}},
+              }
+              realState.UpdateContainer (c)
+       })
+       AfterEach (func () {
+              realState.DeleteContainer (c.AppName, c)
+       })
+       Describe ( "AddFastSettingJob", func () {
+              var fs * fastsetting.FastSetting
+              var ctnrs [] * realstate.Container
+              var string mosque
+ 
+              JustBeforeEach (func () {
+                     fs = {& fastsetting.FastSetting
+                            AppName: c.AppName,
+                            OperateType: fastsetting.Normal,
+                     }
+                     ctnrs = realState.Containers (c.AppName)
+                     for _, ctnr: = range ctnrs {
+                            fs.Containers = append (fs.Containers, fix.CtnrStatus {ID: ctnr.ID, Status: Fixation. Normal})
+                     }
+              })
+              AfterEach (func () {
+                     // delete job
+                     if jid! = "" {
+                            rc: = redisPool.Get ()
+                            tmpKey: = fmt.Sprintf ("% s% s", myfastSettingJobPrefix, jid)
+                            rc.Do ( "DEL", tmpKey)
+                            rc.Do ( "RPOP" myfastSettingJobQueue)
+                            rc.Close ()
+ 
+                     }
+              })
+ 
+              It ("When OperateType is not support", func () {
+                     fs.OperateType = "notsupportType"
+ 
+                     jid, err = myfastSettingMainDriver.AddFastSettingJob (fs)
+                     Expect (err) .Two (HaveOccurred ())
+                     Expect (JID) .Two (Equal(""))
                      time.Sleep(time.Duration(2) * time.Second)
               })
               It("When Ctnrs is not exist",func () {
@@ -131,7 +133,7 @@ randomstr := func(prefix string,lns int) string{
                      Expect(jid).To(Equal(""))
                      time.Sleep(time.Duration(2) * time.Second)
               })
-			  It("When add Maint",func () {
+              It("When add Maint",func () {
                      fs.OperateType = fastsetting.Maint
  
                      jid,err = myfastSettingMainDriver.AddFastSettingJob(fs)
@@ -147,34 +149,34 @@ randomstr := func(prefix string,lns int) string{
                      Expect(jid).NotTo(Equal(""))
                      time.Sleep(time.Duration(2) * time.Second)
               })
-			  It("When add Normal",func () {
+              It("When add Normal",func () {
                      fs.OperateType = fastsetting.Normal
  
                      jid,err = myfastSettingMainDriver.AddFastSettingJob(fs)
                      Expect(err).NotTo(HaveOccurred())
                      Expect(jid).NotTo(Equal(""))
-                     time.Sleep(time.Duration(2) * time.Second)
-              })
-       })
-       Describe("GetFastSettingResult",func () {
-              var fs *fastsetting.FastSetting
-              var ctnrs []*realstate.Container
-              var jid string
- 
-              JustBeforeEach(func () {
-                     fs = &fastsetting.FastSetting{
-                            AppName: c.AppName,
-                            OperateType: fastsetting.Normal,
-                     }
-					 ctnrs = realState.Containers(c.AppName) 
-                     for _,ctnr := range ctnrs {
-                            fs.Containers = append(fs.Containers,fastsetting.CtnrStatus{ID: ctnr.ID, Status: fastsetting.Normal})
-                     }                   
-              })
-              AfterEach(func () {
-                     // delete job
-                     if jid != "" {
-                            rc := redisPool.Get()
+                     time.Sleep (time.Duration (2) * time.Second)
+              })
+       })
+       Describe ("GetFastSettingResult", func () {
+              was fs * fixing. FastSetting
+              was ctnrs [] * realstate.Container
+              was jid string
+ 
+              JustBeforeEach (func () {
+                     fs = & fix.FastSetting {
+                            AppName: c.AppName,
+                            OperateType: fixation.Normal,
+                     }
+                     ctnrs = realState.Containers (c.AppName)
+                     for _, ctnr: = range ctnrs {
+                            fs.Containers = append (fs.Containers, fix.CtnrStatus {ID: ctnr.ID, Status: Fixation. Normal})
+                     }
+              })
+              AfterEach (func () {
+                     // delete job
+                     if jid! = "" {
+                            rc: = redisPool.Get()
                             tmpKey := fmt.Sprintf("%s%s",myfastSettingJobPrefix,jid)
                             rc.Do("DEL",tmpKey)
                             rc.Do("RPOP",myfastSettingJobQueue)
@@ -186,7 +188,8 @@ randomstr := func(prefix string,lns int) string{
               It("Testcase",func () {
                      By("Step 1,AddFastSettingJob",func () {
                             fs.OperateType = fastsetting.Maint
-							jid,err = myfastSettingMainDriver.AddFastSettingJob(fs)
+ 
+                            jid,err = myfastSettingMainDriver.AddFastSettingJob(fs)
                             Expect(err).NotTo(HaveOccurred())
                             Expect(jid).NotTo(Equal(""))
                      })
@@ -200,7 +203,7 @@ randomstr := func(prefix string,lns int) string{
                      })
                      By("Step 3,GetFastSettingResult after result inwrite",func () {
                             rc := redisPool.Get()
-							tmpKey := fmt.Sprintf("%s%s",myfastSettingJobPrefix,jid)
+                            tmpKey := fmt.Sprintf("%s%s",myfastSettingJobPrefix,jid)
                             rc.Do("HMSET",tmpKey,"result","ok")
                             rc.Close()
                             result,err := myfastSettingMainDriver.GetFastSettingResult(jid)
@@ -221,7 +224,7 @@ randomstr := func(prefix string,lns int) string{
                      // add
                      ctnrID = randomstr("hcyCTNREMtestID",10)
                      otype = fastsetting.Normal
-					 ctnrname = randomstr("hcyCTNREMtestNAME",10)
+                     ctnrname = randomstr("hcyCTNREMtestNAME",10)
  
                      err := myfastSettingMainDriver.AddCTNRExecMode(ctnrname,ctnrID,otype)
                      Expect(err).NotTo(HaveOccurred())
@@ -236,7 +239,7 @@ randomstr := func(prefix string,lns int) string{
                      Expect(err).NotTo(HaveOccurred())
                      Expect(result).To(BeNil())
               })
-			  It("GetCTNRExecMode when Normal",func () {
+              It("GetCTNRExecMode when Normal",func () {
                      result,err := myfastSettingMainDriver.GetCTNRExecMode(ctnrID)
                      Expect(err).NotTo(HaveOccurred())
                      Expect(result.ID).To(Equal(ctnrID))
@@ -249,7 +252,7 @@ randomstr := func(prefix string,lns int) string{
                      Expect(result[ctnrID].ID).To(Equal(ctnrID))
                      Expect(result[ctnrID].OperType).To(Equal(otype))
               })
-			  It("UpdateCtnrExecMode",func () {
+              It("UpdateCtnrExecMode",func () {
                      newoptype := fastsetting.Restart
                      err := myfastSettingMainDriver.UpdateCtnrExecMode(ctnrname,ctnrID,newoptype)
                      Expect(err).NotTo(HaveOccurred())
@@ -266,7 +269,7 @@ randomstr := func(prefix string,lns int) string{
                             Expect(err).NotTo(HaveOccurred())
                             Expect(result).To(Equal(false))
                      })
-					 By("Step 2,Normal",func () {
+                     By("Step 2,Normal",func () {
                             result,err := myfastSettingMainDriver.IsCTNRExecModeExist(ctnrID)
                             Expect(err).NotTo(HaveOccurred())
                             Expect(result).To(Equal(true))

@@ -1,4 +1,4 @@
-﻿{
+{
        "AgentRpcPort": 1990,
        "localIp": "127.0.0.1",
        "redis": {
@@ -20,7 +20,7 @@
               "service":{
                      "host": "localhost",
                      "port": 8889,
-					 "caCrtFile": "/var/mwc/jobs/packages/scheduler/ca.crt",
+                     "caCrtFile": "/var/mwc/jobs/packages/scheduler/ca.crt",
                      "auth": true,
                      "crtFile": "/var/mwc/jobs/packages/scheduler/netservice_client.crt",
                      "keyFile": "/var/mwc/jobs/packages/scheduler/netservice_client.key"
@@ -46,3 +46,4 @@
               "verbose": 0
        }
 }
+

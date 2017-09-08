@@ -27,11 +27,10 @@ const testcfg = "../cfg.example.json"
 // for rpc test
 type Execute struct {
 }
-
+ 
 func (executor *Execute) DockDel(req *realstate.Container, resp *createstate.CommonContainerExecResponse) error  {
        return nil
 }
-
 func (executor *Execute) NewDockRun(req *createstate.RunContainerOption, resp *createstate.RunContainerResponse) (err error) {
        resp.Container=&realstate.Container{
               ID: "UnitTestCTNRID203950687264334",
@@ -50,7 +49,6 @@ func (executor *Execute) DockerRestart(req *realstate.Container, resp *createsta
        }
        return nil
 }
-
 func (executor *Execute) DockerStop(req *realstate.Container, resp *createstate.RunContainerResponse) error {
        resp.Container=&realstate.Container{
               ID: "UnitTestCTNRID203950687264334",
@@ -60,13 +58,11 @@ func (executor *Execute) DockerStop(req *realstate.Container, resp *createstate.
        }
        return nil
 }
-
 func (executor *Execute) DockerLogs(req *realstate.Container, resp *string) error {
        tmpstr := "testdockerlogs"
        resp=&tmpstr
        return nil
 }
-
 func (executor *Execute) NodeTaskCreateCtnr(req *createstate.NodeTaskCreateCtnr, resp *createstate.RPCCommonRespone) error {
        return nil
 }
@@ -77,7 +73,7 @@ var _ = Describe("dockerrun suite test",func(){
               app *storageapp.App
               deployinfo *node.DeployInfo
               ctnr *realstate.Container
-			  syncWait time.Duration = 1*60
+              syncWait time.Duration = 1*60
               checkinterval time.Duration = 1
               oncego sync.Once
        )
@@ -87,10 +83,10 @@ var _ = Describe("dockerrun suite test",func(){
               bytes := []byte(str)
               result := []byte{}
               r := rand.New(rand.NewSource(time.Now().UnixNano()))
-              for i :=0;i < lns; i   {
+              for i :=0;i < lns; i++ {
                      result = append(result,bytes[r.Intn(len(bytes))])
               }
-              return prefix string(result)
+              return prefix+string(result)
        }
  
        defer GinkgoRecover()
@@ -98,14 +94,14 @@ var _ = Describe("dockerrun suite test",func(){
        g.FlagInit()
        err := g.ParseConfig(testcfg)
        if err != nil {
-              Fail("g.ParseConfig failed: " err.Error())
+              Fail("g.ParseConfig failed: "+err.Error())
        }
        redisConnPool,err := redisoperate.InitRedisConnPool(g.Config().Redis)
        if err != nil {
-              Fail("redisConnPool Init failed: " err.Error())
+              Fail("redisConnPool Init failed: "+err.Error())
        }
        driver := "redis"
-	   g.RealState,err = realstate.NewSafeRealState(driver, redisConnPool)
+       g.RealState,err = realstate.NewSafeRealState(driver, redisConnPool)
        if err != nil {
               Fail("RealState can not init!")
        }
@@ -122,7 +118,7 @@ var _ = Describe("dockerrun suite test",func(){
                      CPU:         1,
                      Memory:      128,
                      Instance: 1,
-					 Image: storageapp.Image{
+                     Image: storageapp.Image{
                             DockerImageURL:    "9.91.17.17:5000/wujianln/dls",
                             DockerLoginServer: "",
                             DockerUser:        "",
@@ -133,11 +129,11 @@ var _ = Describe("dockerrun suite test",func(){
                      Status:   storageapp.AppStatusStartSuccess,
                      Region:   "fg",
                      VMType:   "df",
-					 Hostnames:    []storageapp.Hostname{storageapp.Hostname{Hostname: "zhangmanjuan", Subdomain: "huawei.com", Status: "1"}},
+                    Hostnames:    []storageapp.Hostname{storageapp.Hostname{Hostname: "zhangmanjuan", Subdomain: "huawei.com", Status: "1"}},
                      Mount:    []storageapp.Mount{
                             {
                                    HPath: "/test/dir",
-								   CPath: "/testdir",
+                                   CPath: "/testdir",
                             },
                      },
               }
@@ -155,7 +151,7 @@ var _ = Describe("dockerrun suite test",func(){
                      ID: randomstr("hcycid",14),
                      IP: "127.0.0.1",
                      AppName: app.Name,
-					 Status: realstate.ContainerStatusUp,
+                     Status: realstate.ContainerStatusUp,
               }
               // start rpc service for test
               oncego.Do(func () {
@@ -181,7 +177,8 @@ var _ = Describe("dockerrun suite test",func(){
        AfterEach(func(){
  
        })
-	   Context("DockerExecAsync test",func(){
+ 
+       Context("DockerExecAsync test",func(){
               var (
                      beforeExec func() error
                      afterExec func(error)
@@ -209,7 +206,7 @@ var _ = Describe("dockerrun suite test",func(){
  
                      dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
               })
-			  It("exec Create",func(){
+              It("exec Create",func(){
                      By("arg is not DockerInstance type",func(){
                             beforeExec = func () error {
                                    Fail("Can not in here")
@@ -230,7 +227,7 @@ var _ = Describe("dockerrun suite test",func(){
  
                             beforeExec = func() error {
                                    c <- true
-								   return fmt.Errorf("exec failed")
+                                   return fmt.Errorf("exec failed")
                             }
                             afterExec = func(err error) {
                                    Fail("Can not in here")
@@ -251,7 +248,7 @@ var _ = Describe("dockerrun suite test",func(){
                                    c <- true
                                    return nil
                             }
-							afterExec = func(err error) {
+                            afterExec = func(err error) {
                                    c <- true
                             }
                             execStr = Create
@@ -273,7 +270,7 @@ var _ = Describe("dockerrun suite test",func(){
                             afterExec = func (err error) {
                                    Fail("Can not in here")
                             }
-							execStr = Drop
+                            execStr = Drop
                             arg = &myTestST{
                                    Name: "test",
                                    ID: 1,
@@ -292,7 +289,8 @@ var _ = Describe("dockerrun suite test",func(){
                             }
                             execStr = Drop
                             arg = ctnr
-							dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
+ 
+                            dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
                             Eventually(c).Should(HaveLen(1))
                      })
                      By("beforeExec ok",func(){
@@ -306,7 +304,8 @@ var _ = Describe("dockerrun suite test",func(){
                             }
                             execStr = Drop
                             arg = ctnr
-							dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
+ 
+                            dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
                             Eventually(c).Should(HaveLen(2))
                      })
               })
@@ -324,7 +323,7 @@ var _ = Describe("dockerrun suite test",func(){
                                    Name: "test",
                                    ID: 1,
                             }
-							dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
+                            dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
                      })                         
                      By("beforeExec error",func(){
                             c := make(chan bool,2)
@@ -338,7 +337,8 @@ var _ = Describe("dockerrun suite test",func(){
                             }
                             execStr = Stop
                             arg = ctnr
-							dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
+ 
+                            dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
                             Eventually(c).Should(HaveLen(1))
                      })
                      By("beforeExec ok",func(){
@@ -353,7 +353,8 @@ var _ = Describe("dockerrun suite test",func(){
                             }
                             execStr = Stop
                             arg = ctnr
-							dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
+ 
+                            dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
                             Eventually(c).Should(HaveLen(2))
                      })
               })
@@ -371,7 +372,7 @@ var _ = Describe("dockerrun suite test",func(){
                                    Name: "test",
                                    ID: 1,
                             }
-							dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
+                            dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
                      })                         
                      By("beforeExec error",func(){
                             c := make(chan bool,2)
@@ -385,7 +386,8 @@ var _ = Describe("dockerrun suite test",func(){
                             }
                             execStr = Restart
                             arg = ctnr
-							dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
+ 
+                            dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
                             Eventually(c).Should(HaveLen(1))
                      })
                      By("beforeExec ok",func(){
@@ -400,7 +402,8 @@ var _ = Describe("dockerrun suite test",func(){
                             }
                             execStr = Restart
                             arg = ctnr
-							dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
+ 
+                            dockerMG.DockerExecAsync(execStr,arg,beforeExec,afterExec)
                             Eventually(c).Should(HaveLen(2))
                      })
               })
@@ -412,10 +415,10 @@ var _ = Describe("dockerrun suite test",func(){
  
               It("when redis not exist this app",func(){
                      ret_dockerlogs,err := dockerMG.GetDockerLogs(app.Name,ctnr.ID)
-                     Expect(err).To(HaveOccurred(),"Can't find any container by this app name: " app.Name)
+                     Expect(err).To(HaveOccurred(),"Can't find any container by this app name: "+app.Name)
                      Expect(ret_dockerlogs).To(BeNil())
               })
-			  It("when redis exist this app",func(){
+              It("when redis exist this app",func(){
                      By("add app to redis",func(){
                             g.RealState.UpdateContainer(ctnr)
                      })
@@ -437,7 +440,7 @@ var _ = Describe("dockerrun suite test",func(){
                                    },
                             },
                      }
-					 err := dockerMG.NodeTaskCreateCtnr(nodeip,appsDeployInfos)
+                     err := dockerMG.NodeTaskCreateCtnr(nodeip,appsDeployInfos)
                      Expect(err).To(BeNil())
               })
        })

@@ -25,6 +25,7 @@ type VmPoolResource struct {
        TimeStamp      int64
        CreatedDate    string
 }
+ 
 func FindVmPoolResource() ([]VmPoolResource, error) {
        timestr := time.Now().Format("2006-01-02 15:04:05")
        if RealNodeState == nil {
@@ -45,8 +46,8 @@ func FindVmPoolResource() ([]VmPoolResource, error) {
                      return nil, err
               }
        }
-
-nodeVlans := make(map[string]string)
+ 
+       nodeVlans := make(map[string]string)
        var vmPoolResources []VmPoolResource
  
        for _, node := range nodes {
@@ -64,16 +65,16 @@ nodeVlans := make(map[string]string)
  
               for _, nodeValue := range nodes {
                      if nodeVlan == nodeValue.Region {
-                            vmCount  
-                            cpuTotal  = nodeValue.CPU
-                            cpuUsed  = nodeValue.CPUVirtUsage
-                            memoryTotal  = nodeValue.Memory
-                            memoryUsed  = nodeValue.MemVirtUsage
+                            vmCount++
+                            cpuTotal += nodeValue.CPU
+                            cpuUsed += nodeValue.CPUVirtUsage
+                            memoryTotal += nodeValue.Memory
+                            memoryUsed += nodeValue.MemVirtUsage
  
                      }
               }
-
-for _, netSource := range netSources {
+ 
+              for _, netSource := range netSources {
                      if netSource.Vlan == nodeVlan {
                             vmPoolResource.IpTotal = netSource.Total
                             vmPoolResource.IpUsed = netSource.Used
@@ -85,11 +86,11 @@ for _, netSource := range netSources {
                      cs := RealState.Containers(key)
                      for _, container := range cs {
                             if _, ok := nodeVlans[container.Region]; ok {
-                                   containerUsed  
+                                   containerUsed++
                             }
                      }
               }
-vmPoolResource.Vlan = nodeVlan
+              vmPoolResource.Vlan = nodeVlan
               vmPoolResource.CreatedDate = timestr
               vmPoolResource.VmTotal = float64(vmCount)
               vmPoolResource.ContainerTotal = float64(cpuTotal)
@@ -106,4 +107,3 @@ vmPoolResource.Vlan = nodeVlan
  
        return vmPoolResources, nil
 }
-

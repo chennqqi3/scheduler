@@ -1,4 +1,5 @@
-﻿#!/bin/bash
+#!/bin/bash
+
 set -e # exit immediately if a simple command exits with a non-zero status
  
 check_command_avail () {
@@ -36,7 +37,7 @@ if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
 fi
 BUILDTIME=$(date -u)
 auto_gen
-
+ 
 echo ""
 echo "------------------- Build Binary --------------------"
 go build
@@ -44,3 +45,4 @@ echo "--------------- Build Binary Success ----------------"
 rm -f buildinfo.go
 ./scheduler -version
 echo ""
+

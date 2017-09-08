@@ -1,4 +1,4 @@
-﻿# HiPaaS Scheduler
+# HiPaaS Scheduler
 ## Getting Started
 ### External Dependencies
  
@@ -23,7 +23,7 @@ nohup ./scheduler -v=3 -alsologtostderr=true -log_dir= " ./log"&
  
 ## Usage Guides
 This is HiPaaS control brain, mainly has the following functions
-
+ 
 - 1. Open a RPC port to Receive the heartbeat informations of all th Agent and Collect loads and container lists of all compute nodes into memory, which called the real state.
 - 2. It has a http port for debugging and exposing memory information.
 - 3. Connect Mysql to get the target state of the current app regularly which is called state desired
@@ -33,7 +33,7 @@ This is HiPaaS control brain, mainly has the following functions
  
 ## Q&A
 **Q: If Scheduler was suspended, what should I do?**
-
+ 
 **A:** Scheduler can be cold backup. Agent has two Scheduler addresses.，Usually the system starts a Scheduler. If the machine which Scheduler is located in was suspended, don't worry, just launch another, and The agent will automatically reconnect.
  
 **Q: If the redis which stored the routing information was suspended, what should I do?**
@@ -44,7 +44,7 @@ This is HiPaaS control brain, mainly has the following functions
 INSERT into app(id,name,creator,team_id,team_name,region,image,mount,recovery,vmtype,memory,cpu,health,instance,status) values(1, 'name-test', 1, 1, 'team-test', '', '9.91.17.17:5000/docker-registry-ui:latest','', true,'was', 512, 2, 0, 0, 0);
  
 INSERT into hostname(id, hostname, subdomain, log, status, app_id, app_name) values(1, 'test-hostname1', 'huawei.com', '', 0, 1, 'name-test');
-
+ 
 INSERT into hostname(id, hostname, subdomain, log, status, app_id, app_name) values(2, 'test-hostname2', 'huawei.com', '', 0, 1, 'name-test');
  
 INSERT into image(id, app_id, docker_image_url, docker_login_server, docker_user, docker_password, docker_email) values(1, 1, "9.91.17.17:5000/docker-registry-ui:latest", "", "", "", "")
@@ -59,7 +59,7 @@ Alternatively, HiPaaS can read its configuration from a JSON file in the followi
 {
         "debug": true,
         "interval": 5,
-		"dockerPort": 5555,
+        "dockerPort": 5555,
         "AgentRpcPort": 1990,
         "domain": "apps.io",
         "localIp": "127.0.0.1",
@@ -84,7 +84,7 @@ Alternatively, HiPaaS can read its configuration from a JSON file in the followi
                "db": "hipaas",
                "collector": "hipaas_"
         },
-		"netservice": {
+        "netservice": {
                "ip": "127.0.0.1",
                "port": 8889
         },
@@ -107,7 +107,7 @@ Alternatively, HiPaaS can read its configuration from a JSON file in the followi
                "netInterval":60,
                "vmInterval":300
         },
-		"health": {
+        "health": {
                "timeout": 10,
                "interval": 5
         },
@@ -126,7 +126,7 @@ Alternatively, HiPaaS can read its configuration from a JSON file in the followi
  
 ```
 Some important parameters are explained as follows:
-
+ 
 - **debug**: debug mode, set "true/false"
 - **interval**:time interval of comparing the database
 - **dockerPort**:the docker port

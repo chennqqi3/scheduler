@@ -18,87 +18,86 @@ import (
        "github-beta.huawei.com/hipaas/scheduler/executor"
        "github-beta.huawei.com/hipaas/scheduler/g"
 )
-
+ 
 const (
        containerFastSettingTableName       = "hipaas_fastsetting_container_table"
        fastSettingJobQueue                 = "hipaas_fastsetting_job"
        fastSettingJobPrefix                = "hipaas_fastsetting_job_"
        task_timeout                  int64 = 600 // second
        task_interval                 int64 = 100 // millsecond
-       health_check_interval         int   = 60
-       sync_check_interval           int   = 600
-       health_check_timeout          int64 = 40 * 60
-       execErrorOccur                      = ""
+       health_check_interval int = 60
+       sync_check_interval int = 600
+       health_check_timeout int64 = 40 * 60
+       execErrorOccur = ""
 )
- 
+ 
 type FastSetting interface {
-       AddFastSettingJob(fastSetting *FS.FastSetting) (string, error)
-       GetFastSettingResult(uuid string) ([]byte, error)
-       GetAllCTNRExecMode() (map[string]*TaskStatus, error)
-       GetCTNRExecMode(containerID string) (*TaskStatus, error)
-       AddCTNRExecMode(appName string, containerID string, operateType string) error
-
-DeleteCTNRExecMode(containerID string) error
-       UpdateCtnrExecMode(appName string, containerID string, operateType string) error
-       IsCTNRExecModeExist(containerId string) (bool, error)
+       AddFastSettingJob (fastSetting * FS.FastSetting) (string, error)
+       GetFastSettingResult (odd string) ([] byte, error)
+       GetAllCTNRExecMode () (folder [string] * TaskStatus, error)
+       GetCTNRExecMode (containerID string) (* TaskStatus, error)
+       AddCTNRExecMode (appName string, containerID string, operatorType string) error
+       DeleteCTNRExecMode (containerID string) error
+       UpdateCtnrExecMode (appName string, containerID string, operatorType string) error
+       IsCTNRExecModeExist (containerId string) (boolean, error)
 }
- 
+ 
 type FastSettingMainDriver struct {
-       jobQueue  *JobQueue
-       storage   *RedisStorage
-       task      taskpool.TaskPoolInterface
-       realState realstate.ContainerRealState
+       jobQueue * JobQueue
+       storage * RedisStorage
+       task taskpool.TaskPoolInterface
+       real state realstate.Container Realestate
 }
- 
+ 
 type result struct {
-       containerID string
-       err         error
+       containerID string
+       err error
 }
- 
-var errTimeout error = errors.New("fastsetting timeout")
- 
-func (this *FastSettingMainDriver) AddFastSettingJob(fastSetting *FS.FastSetting) (string, error) {
-       // checkout appname-containerID
-       switch fastSetting.OperateType {
-       case FS.Maint:
-case FS.Normal:
-       case FS.Restart:
-       default:
-              return "", fmt.Errorf("undefined mode: %s", fastSetting.OperateType)
-       }
-       containerlist := this.realState.Containers(fastSetting.AppName)
-       mapCtnrID := make(map[string]bool)
-       for _, container := range containerlist {
-              mapCtnrID[container.ID] = true
-       }
-       for _, ctnrStatus := range fastSetting.Containers {
-              if _, exist := mapCtnrID[ctnrStatus.ID]; !exist {
-                     return "", fmt.Errorf("ContainerID(%s) isn't matched appName(%s)", ctnrStatus.ID, fastSetting.AppName)
-              }
-       }
- 
-       return this.addFastSettingJob(fastSetting)
+ 
+was errTimeout error = errors.New ("fix timeout")
+ 
+func (this * FastSettingMainDriver) AddFastSettingJob (fastSetting * FS.FastSetting) (string, error) {
+       // checkout appname containerID
+       switch fastSetting.OperateType {
+       case FS.Maint:
+       case FS.Normal:
+       case FS.Restart:
+       default:
+              return "", fmt.Errorf ("undefined mode:% s", fastSetting.OperateType)
+       }
+       container list: = this.realState.Containers (fastSetting.AppName)
+       folderCtnrID: = make (folder [string] boolean)
+       for _, container: = range container list {
+              folderCtnrID [container.ID] = true
+       }
+       for _, ctnrStatus: = range fastSetting.Containers {
+              if _, exist: = mapCtnrID [ctnrStatus.ID]; ! exist {
+                     return "", fmt.Errorf ("ContainerID (% s) is not matched appName (% s) ", ctnrStatus.ID, fastSetting.AppName)
+              }
+       }
+ 
+       return this.addFastSettingJob (fastSetting)
 }
-
-func (this *FastSettingMainDriver) GetFastSettingResult(uuid string) ([]byte, error) {
-       return this.getFastSettingJob(fastSettingJobPrefix uuid, "result")
+ 
+func (this * FastSettingMainDriver) GetFastSettingResult (odd string) ([] byte, error) {
+       return this.getFastSettingJob (fixedSettingJobPrefix + uuid, "result")
 }
- 
-func (this *FastSettingMainDriver) handleCtnrExecMode() {
-       duration := time.Duration(health_check_interval) * time.Second
-       for {
-              time.Sleep(duration)
-              mapCtnrsFastSetting, err := this.GetAllCTNRExecMode()
-              if nil != err {
-                     glog.Error(err)
-                     continue
-              }
-              for id, ts := range mapCtnrsFastSetting {
-                     if ts.Birthday == forever {
+ 
+func (this * FastSettingMainDriver) handleCtnrExecMode () {
+       duration: = time.Duration (health_check_interval) * time.Second
+       for {
+              time.Sleep (duration)
+              folderCtnrsFastSetting, err: = this.GetAllCTNRExecMode ()
+              if nil! = err {
+                     glog.Error (err)
+                     continue
+              }
+              for id, ts: = range mapCtnrsFastSetting {
+                     if ts.Birthday == forever {
                             continue
                      } else {
                             if time.Now().Unix()-ts.Birthday > health_check_timeout {
-							if err := this.DeleteCTNRExecMode(id); nil != err {
+                                   if err := this.DeleteCTNRExecMode(id); nil != err {
                                           glog.Error("DeleteCTNRExecMode failed, Error:", err)
                                           continue
                                    }
@@ -118,7 +117,8 @@ func (this *FastSettingMainDriver) SyncAllappExecMode() {
                      glog.Errorf("GetAllCTNRExecMode failed:%v", err)
                      continue
               }
-			  for _, ts := range mapCtnrsFastSetting {
+ 
+              for _, ts := range mapCtnrsFastSetting {
                      if ts.Appname == "" {
                             glog.Errorf("sync fastsetting mode failed:appname is null, ctrnId:%s", ts.ID)
                             continue
@@ -133,7 +133,8 @@ func (this *FastSettingMainDriver) SyncAllappExecMode() {
                             glog.Errorf("IsContainerExist appname:%s, containerid:%s failed:%v", ts.Appname, ts.ID, err)
                             continue
                      }
-					 if !bExist {
+ 
+                     if !bExist {
                             if err := this.DeleteCTNRExecMode(ts.ID); nil != err {
                                    glog.Errorf("sync deleteCTNRExecMode appname:%s id:%s failed:%v", ts.Appname, ts.ID, err)
                             } else {
@@ -154,7 +155,8 @@ func (this *FastSettingMainDriver) ApplyOneJob() (*Job, error) {
        if nil == job {
               return nil, nil
        }
-	   fastSettingJob := fastSettingJobPrefix + job.JobID
+ 
+       fastSettingJob := fastSettingJobPrefix + job.JobID
        args := []interface{}{fastSettingJob, task_timeout}
        if _, err := rc.Do("EXPIRE", args...); nil != err {
               glog.Errorf("set fastsetting job timeout failed. Drop the job:{%v}, Error:%v.", fastSettingJob, err)
@@ -164,7 +166,6 @@ func (this *FastSettingMainDriver) ApplyOneJob() (*Job, error) {
        return job, nil
  
 }
-
 func (this *FastSettingMainDriver) HandleFastSetting() {
        duration := time.Duration(1) * time.Second
        for {
@@ -179,7 +180,7 @@ func (this *FastSettingMainDriver) HandleFastSetting() {
                             glog.Error(err)
                             continue
                      }
-					 if nil == job {
+                     if nil == job {
                             break
                      }
                      this.task.Require()
@@ -202,7 +203,7 @@ func (this *FastSettingMainDriver) handleFastSetting(job *Job) {
        }
        successctnr := make(map[string]error, 0)
        duration := time.Duration(task_timeout) * time.Second
-	   interval := time.Duration(task_interval) * time.Millisecond
+       interval := time.Duration(task_interval) * time.Millisecond
        now := time.Now()
        for {
               time.Sleep(interval)
@@ -219,7 +220,7 @@ func (this *FastSettingMainDriver) handleFastSetting(job *Job) {
                                    AppName:     fastSetting.AppName,
                                    Birthday:    time.Now(),
                                    OperateType: fastSetting.OperateType,
-								   ContainerID: r.containerID,
+                                   ContainerID: r.containerID,
                                    Message:     fmt.Sprintf("Finish FastSetting Job %v --> app: %v, container: %v", fastSetting.OperateType, fastSetting.AppName, r.containerID),
                             })
                      }
@@ -241,25 +242,25 @@ func (this *FastSettingMainDriver) handleFastSetting(job *Job) {
                      glog.Errorf("do fastsetting for container %s error: %s", ctnr.ID, err.Error())
                      ME.NewEventReporter(ME.ExecResult, ME.ExecResultData{
                             Reason:   "fastSetting fail",
-							AppName:  fastSetting.AppName,
+                            AppName:  fastSetting.AppName,
                             Error:    err.Error(),
-                            Birthday: time.Now(),
-                            Message:  fmt.Sprintf("FastSetting Job %v Fail --> app: %v, container: %v, err: %v", fastSetting.OperateType, fastSetting.AppName, fastSetting.Containers[index], err),
-                     })
-              } else {
-                     fastSetting.Containers[index].Status = FS.ContainerStatusSuccess
-              }
-       }
- 
-       if err := this.setFastSettingJob(fastSettingJobPrefix+job.JobID, fastSetting, "result"); nil != err {
-              glog.Errorf("execut fastsetting job failed. Error: %v, drop this job.", err)
-              return
-       }
-       glog.Infof("finish handle job, jobid: %s, content: %v ", job.JobID, *((*job).JobContent))
+                            Birthday: time.Now (),
+                            Message: fmt.Sprintf ("FastSetting Job% v Fail -> app:% v, container:% v, err:% v", fastSetting.OperateType, fastSetting.AppName, fastSetting.Containers [index], err),
+                     })
+              } else {
+                     fastSetting.Containers [index] .Status = FS.ContainerStatusSuccess
+              }
+       }
+ 
+       if err: = this.setFastSettingJob (fixedSettingJobPrefix + job.JobID, fixedSetting, "result"); nil! = err {
+              glog.Errorf ("execute fix job failed. Error:% v, drop this job.", err)
+              return
+       }
+       glog.Infof ("finish handle job, job:% s, content:% v", job.JobID, * ((* job) .JobContent))
 }
-
-func (this *FastSettingMainDriver) doTheJob(fastSetting *FS.FastSetting, index int, resultChan chan result) {
-       ctnrID := fastSetting.Containers[index].ID
+ 
+func (this * FastSettingMainDriver) doTheJob (fixedSetting * FS.FastSetting, index int, resultChan chan result) {
+       ctnrID: = fixed setting.Containers[index].ID
  
        ts, err := this.GetCTNRExecMode(ctnrID)
        if nil != err {
@@ -278,7 +279,7 @@ func (this *FastSettingMainDriver) doTheJob(fastSetting *FS.FastSetting, index i
                      resultChan <- result{ctnr.ID, nil}
                      return
               }
-			  if ts.OperType != FS.Maint {
+              if ts.OperType != FS.Maint {
                      resultChan <- result{ctnr.ID, fmt.Errorf("fastsetting from %s to %s", ts.OperType, fastSetting.OperateType)}
                      return
               }
@@ -298,7 +299,7 @@ func (this *FastSettingMainDriver) doTheJob(fastSetting *FS.FastSetting, index i
               if nil != ts {
                      if ts.OperType == FS.Maint {
                             glog.Infof("fastsetting success because job already exists, container id: %s, type: %s", ctnr.ID, fastSetting.OperateType)
-							resultChan <- result{ctnr.ID, nil}
+                            resultChan <- result{ctnr.ID, nil}
                      } else {
                             resultChan <- result{ctnr.ID, errors.New("fastsetting job already exists")}
                      }
@@ -321,7 +322,7 @@ func (this *FastSettingMainDriver) doTheJob(fastSetting *FS.FastSetting, index i
                      }
                      this.UpdateCtnrExecMode(ctnr.AppName, ctnr.ID, fastSetting.OperateType)
               }
-			  executor.GetDockerManager().DockerExecAsync(executor.Stop, ctnr, beforeDockerExec, afterDockerExec)
+              executor.GetDockerManager().DockerExecAsync(executor.Stop, ctnr, beforeDockerExec, afterDockerExec)
  
        case FS.Restart:
               beforeDockerExec := func() error {
@@ -340,35 +341,35 @@ func (this *FastSettingMainDriver) doTheJob(fastSetting *FS.FastSetting, index i
                      err = this.DeleteCTNRExecMode(ctnr.ID)
                      // this.UpdateCtnrExecMode(ctnr.ID, fastSetting.OperateType)
               }
-			  executor.GetDockerManager().DockerExecAsync(executor.Restart, ctnr, beforeDockerExec, afterDockerExec)
+              executor.GetDockerManager().DockerExecAsync(executor.Restart, ctnr, beforeDockerExec, afterDockerExec)
  
        default:
-              resultChan <- result{ctnr.ID, fmt.Errorf("undefined mode: %s", fastSetting.OperateType)}
-       }
+              resultChan <- result{ctnr.ID, fmt.Errorf("undefined mode:% s ", fastSetting.OperateType)}
+       }
 }
- 
-func (this *FastSettingMainDriver) addFastSettingJob(fastSetting *FS.FastSetting) (string, error) {
-       uuid := uuid.GetGuid()
-       err := this.setFastSettingJob(fastSettingJobPrefix+uuid, fastSetting, "source")
-       if err != nil {
-              return "", err
-       }
- 
-       job := &Job{
-              JobID:      uuid,
-              JobContent: fastSetting,
-       }
-       rc := this.storage.connPool.Get()
-       defer rc.Close()
-	   err = this.jobQueue.Enqueue(rc, fastSettingJobQueue, job)
-       if err != nil {
-              return "", err
-       }
-       return uuid, nil
+ 
+func (this * FastSettingMainDriver) addFastSettingJob (fixedSetting * FS.FastSetting) (string, error) {
+       uuid: = uuid.GetGuid ()
+       err: = this.setFastSettingJob (fixedSettingJobPrefix + uuid, fastSetting, "source")
+       if err! = nil {
+              return "", err
+       }
+ 
+       job: = & Job {
+              JobID: uuid,
+              JobContent: FastSetting,
+       }
+       rc: = this.storage.connPool.Get ()
+       defer rc.Close ()
+       err = this.jobQueue.Enqueue (rc, fastSettingJobQueue, job)
+       if err! = nil {
+              return "", err
+       }
+       return uuid, nil
 }
- 
-func (this *FastSettingMainDriver) setFastSettingJob(keyName string, fastSetting *FS.FastSetting, dataType string) error {
-       jsonData, err := json.Marshal(fastSetting)
+ 
+func (this * FastSettingMainDriver) setFastSettingJob (keyName string, fixedSetting * FS.FastSetting, dataType string) error {
+       jsonData, err: = json.Marshal(fastSetting)
        if err != nil {
               glog.Error("Marshal fastsetting.FastSetting fail:", err)
               return err
@@ -381,7 +382,8 @@ func (this *FastSettingMainDriver) setFastSettingJob(keyName string, fastSetting
               glog.Errorf("HMSET %v fail: %v", args, err)
               return err
        }
-	   args = []interface{}{keyName, task_timeout}
+ 
+       args = []interface{}{keyName, task_timeout}
        if _, err := rc.Do("EXPIRE", args...); nil != err {
               glog.Errorf("set fastsetting job timeout failed:job:%v, Error:%v.", keyName, err)
               return err
@@ -402,7 +404,7 @@ func (this *FastSettingMainDriver) getFastSettingJob(keyName string, dataType st
        }
        return []byte(jsonData[0]), nil
 }
-
+ 
 func (this *FastSettingMainDriver) GetAllCTNRExecMode() (map[string]*TaskStatus, error) {
        return this.storage.GetAllCTNRExecMode()
 }
@@ -419,7 +421,7 @@ func (this *FastSettingMainDriver) AddCTNRExecMode(appName string, containerID s
  
        return nil
 }
-
+ 
 func (this *FastSettingMainDriver) DeleteCTNRExecMode(containerID string) error {
        err := this.storage.DeleteCTNRExecMode(containerID)
        if err != nil {
@@ -439,8 +441,9 @@ func (this *FastSettingMainDriver) UpdateCtnrExecMode(appName string, containerI
  
 func (this *FastSettingMainDriver) IsCTNRExecModeExist(containerId string) (bool, error) {
        return this.storage.IsCTNRExecModeExist(containerId)
-	   }
-	   type RedisStorage struct {
+}
+ 
+type RedisStorage struct {
        connPool *redis.Pool
 }
  
@@ -460,15 +463,15 @@ func (this *RedisStorage) GetAllCTNRExecMode() (map[string]*TaskStatus, error) {
        defer rc.Close()
  
        data, err := redis.Strings(rc.Do("HGETALL", containerFastSettingTableName))
-	   if err != nil {
+       if err != nil {
               return mapCTNRExecMode, err
        }
        if len(data) == 0 {
               return mapCTNRExecMode, nil
        }
-       for i := 0; i < len(data); i = i   2 {
+       for i := 0; i < len(data); i = i + 2 {
               ts := TaskStatus{}
-              if err := json.Unmarshal([]byte(data[i 1]), &ts); nil != err {
+              if err := json.Unmarshal([]byte(data[i+1]), &ts); nil != err {
                      return mapCTNRExecMode, err
               }
               mapCTNRExecMode[data[i]] = &ts
@@ -485,7 +488,8 @@ func (this *RedisStorage) GetCTNRExecMode(containerID string) (*TaskStatus, erro
        if err != nil {
               return nil, err
        }
-	   if 0 == exist {
+ 
+       if 0 == exist {
               return nil, nil
        }
  
@@ -512,7 +516,7 @@ func (this *RedisStorage) AddCTNRExecMode(appName string, containerID string, op
               Birthday: time.Now().Unix(),
               OperType: operateType,
        }
-	   tsbyte, err := json.Marshal(ts)
+       tsbyte, err := json.Marshal(ts)
        if nil != err {
               return err
        }
@@ -536,7 +540,8 @@ func (this *RedisStorage) DeleteCTNRExecMode(containerID string) error {
               glog.Errorf("HDEL %v fail: %v", args, err)
               return err
        }
-	   return nil
+ 
+       return nil
 }
  
 func (this *RedisStorage) UpdateCtnrExecMode(appName string, containerID string, operateType string) error {
@@ -562,7 +567,7 @@ func (this *RedisStorage) UpdateCtnrExecMode(appName string, containerID string,
  
        return nil
 }
-
+ 
 func (this *RedisStorage) IsCTNRExecModeExist(containerId string) (bool, error) {
        rc := this.connPool.Get()
        defer rc.Close()
@@ -581,25 +586,26 @@ func (this *RedisStorage) IsCTNRExecModeExist(containerId string) (bool, error) 
  
 var fastSettingMainDriver *FastSettingMainDriver
 var once sync.Once
+ 
 func NewFastsetting(redisPool *redis.Pool, realState realstate.ContainerRealState) FastSetting {
-       once.Do(func() {
-              tp, _ := taskpool.NewTaskPool(100)
-              fastSettingMainDriver = &FastSettingMainDriver{
-                     storage:   &RedisStorage{connPool: redisPool},
-                     jobQueue:  new(JobQueue),
-                     realState: realState,
-                     task:      tp,
-              }
-              go fastSettingMainDriver.HandleFastSetting()
-              go fastSettingMainDriver.handleCtnrExecMode()
-              go fastSettingMainDriver.SyncAllappExecMode()
-       })
-       return fastSettingMainDriver
+       once.Do (func () {
+              tp, _: = taskpool.NewTaskPool (100)
+              fastSettingMainDriver = & FastSettingMainDriver {
+                     storage: & RedisStorage {connPool: redisPool},
+                     jobQueue: new (JobQueue),
+                     realState: realState,
+                     task: tp,
+              }
+              go fixSettingMainDriver.HandleFastSetting ()
+              go fastSettingMainDriver.handleCtnrExecMode ()
+              go fastSettingMainDriver.SyncAllappExecMode ()
+       })
+       return fastSettingMainDriver
 }
-
-func GetFastsetting() (FastSetting, error) {
-       if fastSettingMainDriver == nil {
-              return nil, errors.New("fastSettingMainDriver not init!")
-       }
-       return fastSettingMainDriver, nil
+ 
+func GetFastsetting () (FastSetting, error) {
+       if fastSettingMainDriver == nil {
+              return nil, errors.New ("fastSettingMainDriver not init!")
+       }
+       return fastSettingMainDriver, nil
 }

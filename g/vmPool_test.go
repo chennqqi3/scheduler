@@ -11,6 +11,7 @@ import (
        "time"
        // "fmt"
 )
+ 
 // FindVmPoolResource() ([]VmPoolResource, error)
 var _ = Describe("VMPool Test",func () {
        var (
@@ -26,7 +27,8 @@ var _ = Describe("VMPool Test",func () {
                      FlagInit()
                      err = ParseConfig("../cfg.example.json")
                      Expect(err).NotTo(HaveOccurred())
-					 // Redis pool init
+ 
+                     // Redis pool init
                      RedisConnPool, err = redisoperate.InitRedisConnPool(Config().Redis)
                      Expect(err).NotTo(HaveOccurred())
  
@@ -36,7 +38,7 @@ var _ = Describe("VMPool Test",func () {
                      RealState, err = realstate.NewSafeRealState(driver, RedisConnPool)
                      Expect(err).NotTo(HaveOccurred())    
               })
-			  mynode = &nodeStorage.Node{
+              mynode = &nodeStorage.Node{
                      // Default this IP node is not exist
                      IP: "10.101.10.101",
                      Region: "unitTRegion1",
@@ -56,7 +58,7 @@ var _ = Describe("VMPool Test",func () {
                      Version: "1.6.8",
               }
        })
-	   AfterEach(func () {
+       AfterEach(func () {
  
        })
  
@@ -73,7 +75,7 @@ var _ = Describe("VMPool Test",func () {
                      tmpnode3 = *mynode
  
                      //
-					 tmpnode1.IP = "10.101.10.102"
+                     tmpnode1.IP = "10.101.10.102"
                      tmpnode1.AvailableZone = "testAZ1"
                      tmpnode2.IP = "10.101.10.103"
                      tmpnode2.AvailableZone = "testAZ232"
@@ -90,7 +92,8 @@ var _ = Describe("VMPool Test",func () {
                      DeleteNode(tmpnode2.IP)
                      DeleteNode(tmpnode3.IP)
               })
-			  It("Testcase",func () {
+ 
+              It("Testcase",func () {
                      result,err := FindVmPoolResource()
                      Expect(err).To(BeNil())
                      Expect(len(result)).NotTo(Equal(0))

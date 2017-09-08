@@ -24,15 +24,16 @@ var _ = Describe("Redisqueue",func(){
        const (
               fastsettingTestJobQueue = "harlan_test_fastsetting_job"
        )
-randomstr := func(prefix string,lns int) string{
+ 
+       randomstr := func(prefix string,lns int) string{
               str := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
               bytes := []byte(str)
               result := []byte{}
               r := rand.New(rand.NewSource(time.Now().UnixNano()))
-              for i :=0;i < lns; i   {
+              for i :=0;i < lns; i++ {
                      result = append(result,bytes[r.Intn(len(bytes))])
               }
-              return prefix string(result)
+              return prefix+string(result)
        }
  
        // prepare actions
@@ -44,7 +45,7 @@ randomstr := func(prefix string,lns int) string{
        BeforeEach(func(){
               rc = redisConPool.Get()
               Expect(rc).NotTo(BeNil())
-			  job = &Job{
+              job = &Job{
                      JobID: randomstr("hcyunitTest",10),
                      JobContent: &fastsetting.FastSetting{
                             AppName: randomstr("hcyCtnrTest",10),
@@ -68,7 +69,7 @@ randomstr := func(prefix string,lns int) string{
                      err := jobqueue.Enqueue(rc,fastsettingTestJobQueue,job)
                      Expect(err).NotTo(HaveOccurred())
               })
-			  AfterEach(func () {
+              AfterEach(func () {
                      // Dequeue
                      result,err := jobqueue.Dequeue(rc,fastsettingTestJobQueue)
                      Expect(err).NotTo(HaveOccurred())
@@ -90,7 +91,7 @@ randomstr := func(prefix string,lns int) string{
               AfterEach(func () {
                      jobqueue.Dequeue(rc,fastsettingTestJobQueue)
               })
-			  It("When Dequeue repeaty twice",func () {
+              It("When Dequeue repeaty twice",func () {
                      By("Step 1,Dequeue",func () {
                             result,err := jobqueue.Dequeue(rc,fastsettingTestJobQueue)
                             Expect(err).NotTo(HaveOccurred())

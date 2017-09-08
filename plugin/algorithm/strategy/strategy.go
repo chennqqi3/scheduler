@@ -16,7 +16,7 @@ type MinionPriority struct {
        Count int
        Score int
 }
-
+ 
 type MinionPriorityList []*MinionPriority
 type StrategyFunc func(app *app.App, existContainers *ContainerList, minions *MinionPriorityList) (*MinionPriorityList, error)
  
@@ -43,7 +43,7 @@ const (
        MinionCountScore = MaxScore * 5  / 30
        MinionFailsScore = MaxScore * 10 / 30
 )
-
+ 
 func imageURLSplit(imageURL string) (repo string, tag string, err error) {
        srcImages := strings.Split(imageURL, ":")
  
@@ -64,7 +64,8 @@ func ImageStrategy(app *app.App, existContainers *ContainerList, minions *Minion
        if nil == minions {
               return nil, nil
        }
-	   srcRepo, srcTag, err := imageURLSplit(app.Image.DockerImageURL)
+ 
+       srcRepo, srcTag, err := imageURLSplit(app.Image.DockerImageURL)
        if err != nil {
               return nil, err
        }
@@ -88,7 +89,7 @@ func ImageStrategy(app *app.App, existContainers *ContainerList, minions *Minion
  
        return minions, nil
 }
-
+ 
 func AppAffinityStrategy(app *app.App, existContainers *ContainerList, minions *MinionPriorityList) (*MinionPriorityList, error) {
        if nil == app || existContainers == nil || minions == nil {
               return nil, fmt.Errorf("AppAffinityStrategy parameters error!")
@@ -107,10 +108,10 @@ func AppAffinityStrategy(app *app.App, existContainers *ContainerList, minions *
        if 0 == maxCpu || 0 == maxMem {
               return minions, nil
        }
-	   for _, minionPriority := range *minions {
+       for _, minionPriority := range *minions {
               scoreCpu := CpuUsageScore * (1 - (minionPriority.Node.CPUVirtUsage / maxCpu))
               scoreMem := MemUsageScore * (1 - (minionPriority.Node.MemVirtUsage / maxMem))
-              minionPriority.Score  = (scoreCpu   scoreMem)
+              minionPriority.Score += (scoreCpu + scoreMem)
        }
  
        return minions, nil
@@ -126,12 +127,13 @@ func MinionAntiAffinityStrategy(app *app.App, existContainers *ContainerList, mi
                      maxFails = minionPriority.Node.Fails
               }
        }
-	   if 0 == maxFails {
+ 
+       if 0 == maxFails {
               return minions, nil
        }
  
        for _, minionPriority := range *minions {
-              minionPriority.Score  = MinionFailsScore * (1 - minionPriority.Node.Fails / maxFails)
+              minionPriority.Score += MinionFailsScore * (1 - minionPriority.Node.Fails / maxFails)
        }
  
        return minions, nil
@@ -153,13 +155,14 @@ func MinionAffinityStrategy(app *app.App, existContainers *ContainerList, minion
                      max = minionPriority.Count
               }
        }
-	   if 0 == max {
+ 
+       if 0 == max {
               return minions, nil
        }
  
        for _, minionPriority := range *minions {
               score := MinionCountScore * (minionPriority.Count) / max
-              minionPriority.Score  = score
+              minionPriority.Score += score
        }
  
        return minions, nil
@@ -167,7 +170,7 @@ func MinionAffinityStrategy(app *app.App, existContainers *ContainerList, minion
  
 func mapAdd(selectCount map[string]int, key string, count int) {
        if _, ok := selectCount[key]; ok {
-              selectCount[key]  
+              selectCount[key]++
        } else {
               selectCount[key] = 1
        }

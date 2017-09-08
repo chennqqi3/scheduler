@@ -14,7 +14,7 @@ import (
        "github-beta.huawei.com/hipaas/common/storage/realstate"
        "github.com/fsouza/go-dockerclient"
 )
-
+ 
 func ParaRunContainerOption(app *app.App, deployInfo *node.DeployInfo) (*createstate.RunContainerOption, error) {
        if app.Recovery == 0 {
               deployInfo.Recovery = strconv.FormatBool(false)
@@ -31,7 +31,7 @@ func ParaRunContainerOption(app *app.App, deployInfo *node.DeployInfo) (*creates
        if err != nil {
               return nil, fmt.Errorf("serielize envs error: %s", err.Error())
        }
-	   mountsString, err := app.Mount.ToString()
+       mountsString, err := app.Mount.ToString()
        if err != nil {
               return nil, fmt.Errorf("serielize mount error: %s", err.Error())
        }
@@ -56,7 +56,8 @@ func ParaRunContainerOption(app *app.App, deployInfo *node.DeployInfo) (*creates
        if nil != err {
               return nil, fmt.Errorf("marhshal app.ports failed. Error: %v.", err)
        }
-	   hipaasLabels := make(map[string]string)
+ 
+       hipaasLabels := make(map[string]string)
        hipaasLabels[realstate.ContainerEnv[realstate.Envs]] = userDefinedEnvs
        hipaasLabels[realstate.ContainerEnv[realstate.Recovery]] = deployInfo.Recovery
        hipaasLabels[realstate.ContainerEnv[realstate.HostName]] = deployInfo.Hostname
@@ -65,7 +66,7 @@ func ParaRunContainerOption(app *app.App, deployInfo *node.DeployInfo) (*creates
        hipaasLabels[realstate.ContainerEnv[realstate.Memory]] = fmt.Sprintf("%d", app.Memory)
        hipaasLabels[realstate.ContainerEnv[realstate.AppName]] = app.Name
        hipaasLabels[realstate.ContainerEnv[realstate.AppType]] = app.AppType
-	   hipaasLabels[realstate.ContainerEnv[realstate.CtnrArchive]] = string(archiveJson)
+       hipaasLabels[realstate.ContainerEnv[realstate.CtnrArchive]] = string(archiveJson)
        hipaasLabels[realstate.ContainerEnv[realstate.Ports]] = jsonport
  
        exposePorts := make(map[docker.Port]struct{})
@@ -82,7 +83,7 @@ func ParaRunContainerOption(app *app.App, deployInfo *node.DeployInfo) (*creates
  
        createOption := docker.CreateContainerOptions{
               Name: deployInfo.Ctnrname,
-			  Config: &docker.Config{
+              Config: &docker.Config{
                      CPUShares:    cpuShares,
                      Memory:       memoryLimit,
                      ExposedPorts: exposePorts,
@@ -106,12 +107,12 @@ func ParaRunContainerOption(app *app.App, deployInfo *node.DeployInfo) (*creates
               auth = docker.AuthConfiguration{}
        } else {
               myaes, err := aes.New("")
-			  if err != nil {
+              if err != nil {
                      return nil, err
               }
               password, err := myaes.Decrypt(app.Image.DockerPassword)
               if err != nil {
-                     return nil, errors.New("app.Image.DockerPassword decrypt error: "   err.Error())
+                     return nil, errors.New("app.Image.DockerPassword decrypt error: " + err.Error())
               }
               auth = docker.AuthConfiguration{
                      Username:      app.Image.DockerUser,
@@ -125,8 +126,8 @@ func ParaRunContainerOption(app *app.App, deployInfo *node.DeployInfo) (*creates
        if err != nil {
               return &createstate.RunContainerOption{}, err
        }
-	   /************************start option**********************/
-       extraHost := deployInfo.Hostname   " "   app.GetSubHostname(deployInfo.Hostname)   ":"   deployInfo.ContainerIP
+       /************************start option**********************/
+       extraHost := deployInfo.Hostname + " " + app.GetSubHostname(deployInfo.Hostname) + ":" + deployInfo.ContainerIP
        hostConfig := &docker.HostConfig{
               CPUShares:    cpuShares,
               Memory:       memoryLimit,
@@ -146,7 +147,7 @@ func ParaRunContainerOption(app *app.App, deployInfo *node.DeployInfo) (*creates
        if len(mount) != 0 || mount != nil {
               hostConfig.Binds = mount
        }
-	   /************************image option**********************/
+       /************************image option**********************/
        repos, tag := parseRepositoryTag(app.Image.DockerImageURL)
        /************************run option**********************/
        return &createstate.RunContainerOption{
@@ -177,7 +178,7 @@ func buildEnvArray(envVars map[string]string) []string {
  
        return arr
 }
-
+ 
 // 返回挂载点和处理过的mount结构体
 func parseMount(mounts app.Mounts, ctnrname string) ([]string, app.Mounts, error) {
        var binds []string
@@ -187,11 +188,11 @@ func parseMount(mounts app.Mounts, ctnrname string) ([]string, app.Mounts, error
                      return nil, nil, err
               }
               if mount.Type == app.MountTypePrivate {
-                     mount.HPath = ParaPath(mount.HPath)   "/"   ctnrname
+                     mount.HPath = ParaPath(mount.HPath) + "/" + ctnrname
               }
-              bind := mount.HPath   ":"   mount.CPath
+              bind := mount.HPath + ":" + mount.CPath
               if mount.Privilege != "" {
-                     bind  = ":"   mount.Privilege
+                     bind += ":" + mount.Privilege
               }
  
               binds = append(binds, bind)
@@ -199,7 +200,7 @@ func parseMount(mounts app.Mounts, ctnrname string) ([]string, app.Mounts, error
        }
        return binds, bindMounts, nil
 }
-
+ 
 func ParaPath(path string) string {
        if len(path) > 1 && string(path[len(path)-1]) == "/" {
               return path[:len(path)-1]
@@ -212,7 +213,7 @@ func parseRepositoryTag(repos string) (string, string) {
        if n < 0 {
               return repos, ""
        }
-       if tag := repos[n 1:]; !strings.Contains(tag, "/") {
+       if tag := repos[n+1:]; !strings.Contains(tag, "/") {
               return repos[:n], tag
        }
        return repos, ""

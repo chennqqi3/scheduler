@@ -22,8 +22,8 @@ func clone(regionName string) map[string]*nodeStorage.Node {
               glog.Error("RealNodeState.GetAllNode fail: ", err)
               return ret
        }
-
-if regionName == "" {
+ 
+       if regionName == "" {
               for _, n := range nodes {
                      ret[n.IP] = n
               }
@@ -52,7 +52,7 @@ func UpdateNode(node *nodeStorage.Node) {
  
        return
 }
-
+ 
 // DeleteStaleNode delete stale node.
 func DeleteStaleNode(before int64) []string {
        if RealNodeState == nil {
@@ -78,7 +78,7 @@ func DeleteStaleNode(before int64) []string {
        }
        return deleteNodeIPs
 }
-
+ 
 // DeleteNode delete Node.
 func DeleteNode(ip string) error {
        if RealNodeState == nil {
@@ -105,8 +105,8 @@ func TheOne() *nodeStorage.Node {
               glog.Error("RealNodeState.GetAllNode fail: ", err)
               return nil
        }
-	   
-	   for _, n := range nodes {
+ 
+       for _, n := range nodes {
               return n
        }
  
@@ -130,7 +130,7 @@ func GetNode(ip string) *nodeStorage.Node {
  
 var ErrNodeNotExist = errors.New("node not exist!")
 var ErrRealNodeStateNotExist = errors.New("RealNodeState not exist!")
-
+ 
 // GetRegionByNode select available nodes to deploy.
 func GetRegionByNode(ip string) (string, error) {
  
@@ -151,7 +151,8 @@ func GetRegionByNode(ip string) (string, error) {
 func ChooseNode(app *app.App, region string, deployCnt int) map[string]int {
        // key:IP, value:instance numbers
        ret := make(map[string]int)
-	   copyNodes := clone(region)
+ 
+       copyNodes := clone(region)
        size := len(copyNodes)
        if size == 0 {
               return ret
@@ -174,8 +175,8 @@ func ChooseNode(app *app.App, region string, deployCnt int) map[string]int {
        }
  
        sort.Sort(ns)
-	   
-	   // delete node which MemFree < app.Memory
+ 
+       // delete node which MemFree < app.Memory
        memFreeIsOK := make([]*nodeStorage.Node, 0, size)
        for _, n := range ns {
               if n.MemFree > uint64(app.Memory) {
@@ -199,15 +200,15 @@ func ChooseNode(app *app.App, region string, deployCnt int) map[string]int {
               done := len(memFreeIsOK)
               for {
                      for _, n := range memFreeIsOK {
-                            ret[n.IP]  
-                            done  
+                            ret[n.IP]++
+                            done++
                             if done == deployCnt {
                                    goto CHK_MEM
                             }
                      }
               }
-			  
-			  CHK_MEM:
+ 
+       CHK_MEM:
  
               for _, n := range memFreeIsOK {
                      if n.MemFree < uint64(app.Memory*ret[n.IP]) {
@@ -239,8 +240,8 @@ func ChooseNode(app *app.App, region string, deployCnt int) map[string]int {
                      }
               }
        }
-	   
-	   // we have enough nodes. delete the node which has deployed this app.
+ 
+       // we have enough nodes. delete the node which has deployed this app.
        // we can delete a maximum of size - deployCnt
        canDeleteNodeCount := size - deployCnt
        // the nodes not deploy this app, order by MemFree asc
@@ -262,7 +263,7 @@ func ChooseNode(app *app.App, region string, deployCnt int) map[string]int {
                      hasDeployedCount--
                      if hasDeployedCount == 0 {
                             // the rest nodes are all not deploy this app
-							allOk = true
+                            allOk = true
                             continue
                      }
                      canDeleteNodeCount--
@@ -276,7 +277,7 @@ func ChooseNode(app *app.App, region string, deployCnt int) map[string]int {
        cnt := 0
        for i := len(notDeploythisApp) - 1; i >= 0; i-- {
               ret[notDeploythisApp[i].IP] = 1
-              cnt  
+              cnt++
               if cnt == deployCnt {
                      return ret
               }
@@ -290,12 +291,13 @@ func saveNodetoVlan(nodeSlice *nodeStorage.NodeSelectSlice, node *nodeStorage.No
               Node:  node,
               Count: count,
        })
-return
+ 
+       return
 }
  
 func mapAdd(selectCount map[string]int, key string, count int) {
        if _, ok := selectCount[key]; ok {
-              selectCount[key]  
+              selectCount[key]++
        } else {
               selectCount[key] = 1
        }
@@ -313,6 +315,7 @@ const (
        cMemFree            = "MemFree_notmatch"
        cSuccess            = "success"
 )
+ 
 // SelectNode select available nodes to deploy.
 func NewSelectNode(app *app.App, region string) (nodeSlice *nodeStorage.NodeSelectSlice, selectCount map[string]int, err error) {
  
@@ -334,78 +337,8 @@ func NewSelectNode(app *app.App, region string) (nodeSlice *nodeStorage.NodeSele
               mapAdd(selectCount, cGetAllNode, 1)
               return nodeSlice, selectCount, err
        }
-	   
-	   nodeCount := len(allNodes)
-       if 0 == nodeCount {
-              mapAdd(selectCount, cGetAllNode, 1)
-              return nodeSlice, selectCount, nil
-       }
  
-       for _, node := range allNodes {
- 
-              // Region要求
-              if region != "" && region != node.Region {
-                     mapAdd(selectCount, cRegion, 1)
-                     continue
-              }
- 
-              // VM类型要求
-              if app.VMType != "" && app.VMType != node.VMType {
-                     mapAdd(selectCount, cVmType, 1)
-                     continue
-              }
-			  
-			  // CPU槽位要求
-              nodeFreeVirtCpu := node.CPU - node.CPUVirtUsage
-              if nodeFreeVirtCpu < app.CPU {
-                     mapAdd(selectCount, cNodeFreeVirtCpu, 1)
-                     continue
-              }
-              cpuCount := nodeFreeVirtCpu / app.CPU
-              count := cpuCount
- 
-              // 内存槽位要求
-              nodeFreeVirtMemory := node.Memory - node.MemVirtUsage
-              if nodeFreeVirtMemory < app.Memory {
-                     mapAdd(selectCount, cNodeFreeVirtMemory, 1)
-                     continue
-              }
-              memVirtCount := nodeFreeVirtMemory / app.Memory
-              if memVirtCount < count {
-                     count = memVirtCount
-              }
- 
-              // 实际内存要求
-              if int(node.MemFree) < app.Memory {
-                     mapAdd(selectCount, cMemFree, 1)
-                     continue
-              }
-              memCount := int(node.MemFree) / app.Memory
-			  if memCount < count {
-                     count = memCount
-              }
- 
-              if count > 0 {
-                     mapAdd(selectCount, cSuccess, 1)
-                     saveNodetoVlan(nodeSlice, node, count)
-              }
-       }
- 
-       return nodeSlice, selectCount, nil
-}
- 
-// SelectNode select available nodes to deploy.
-func SelectNode(app *app.App, allNodes []*nodeStorage.Node, region string) (nodeSlice *nodeStorage.NodeSelectSlice, selectCount map[string]int, err error) {
- 
-       nodeSlice = &nodeStorage.NodeSelectSlice{}
-       selectCount = make(map[string]int)
- 
-       if app.CPU <= 0 || app.Memory <= 0 {
-              mapAdd(selectCount, cParameter, 1)
-              return nil, selectCount, errors.New("CPU and Memory must be positive!")
-       }
-	   
-	   nodeCount := len(allNodes)
+       nodeCount := len(allNodes)
        if 0 == nodeCount {
               mapAdd(selectCount, cGetAllNode, 1)
               return nodeSlice, selectCount, nil
@@ -429,35 +362,104 @@ func SelectNode(app *app.App, allNodes []*nodeStorage.Node, region string) (node
               nodeFreeVirtCpu := node.CPU - node.CPUVirtUsage
               if nodeFreeVirtCpu < app.CPU {
                      mapAdd(selectCount, cNodeFreeVirtCpu, 1)
-                     continue
-              }
-			  
-			  cpuCount := nodeFreeVirtCpu / app.CPU
-              count := cpuCount
- 
-              // 内存槽位要求
-              nodeFreeVirtMemory := node.Memory - node.MemVirtUsage
-              if nodeFreeVirtMemory < app.Memory {
-                     mapAdd(selectCount, cNodeFreeVirtMemory, 1)
-                     continue
-              }
-              memVirtCount := nodeFreeVirtMemory / app.Memory
-              if memVirtCount < count {
-                     count = memVirtCount
-              }
- 
-              // 实际内存要求
-              if int(node.MemFree) < app.Memory {
-                     mapAdd(selectCount, cMemFree, 1)
-                     continue
-              }
-              memCount := int(node.MemFree) / app.Memory
+                     continue
+              }
+              cpuCount: = nodeFreeVirtCpu / app.CPU
+              count: = cpuCount
+ 
+              // memory slot requirements
+              nodeFreeVirtMemory: = node.Memory - node.MemVirtUsage
+              if nodeFreeVirtMemory <app.Memory {
+                     mapAdd (selectCount, cNodeFreeVirtMemory, 1)
+                     continue
+              }
+              memVirtCount: = nodeFreeVirtMemory / app.Memory
+              if memVirtCount <count {
+                     count = memVirtCount
+              }
+ 
+              // actual memory requirements
+              if int (node.MemFree) <app.Memory {
+                     mapAdd (selectCount, cMemFree, 1)
+                     continue
+              }
+              memCount: = int (node.MemFree) / app.Memory
               if memCount < count {
                      count = memCount
               }
-			  
-			  if count > 0 {
+ 
+              if count > 0 {
                      mapAdd(selectCount, cSuccess, 1)
+                     saveNodetoVlan(nodeSlice, node, count)
+              }
+       }
+ 
+       return nodeSlice, selectCount, nil
+}
+ 
+// SelectNode select available nodes to deploy.
+func SelectNode(app *app.App, allNodes []*nodeStorage.Node, region string) (nodeSlice *nodeStorage.NodeSelectSlice, selectCount map[string]int, err error) {
+ 
+       nodeSlice = &nodeStorage.NodeSelectSlice{}
+       selectCount = make(map[string]int)
+ 
+       if app.CPU <= 0 || app.Memory <= 0 {
+              mapAdd(selectCount, cParameter, 1)
+              return nil, selectCount, errors.New("CPU and Memory must be positive!")
+       }
+ 
+       nodeCount := len(allNodes)
+       if 0 == nodeCount {
+              mapAdd(selectCount, cGetAllNode, 1)
+              return nodeSlice, selectCount, nil
+       }
+ 
+       for _, node := range allNodes {
+ 
+              // Region要求
+              if region != "" && region != node.Region {
+                     mapAdd(selectCount, cRegion, 1)
+                     continue
+              }
+ 
+              // VM类型要求
+              if app.VMType != "" && app.VMType != node.VMType {
+                     mapAdd(selectCount, cVmType, 1)
+                     continue
+              }
+ 
+              // CPU槽位要求
+              nodeFreeVirtCpu := node.CPU - node.CPUVirtUsage
+              if nodeFreeVirtCpu < app.CPU {
+                     mapAdd(selectCount, cNodeFreeVirtCpu, 1)
+                     continue
+              }
+              cpuCount: = nodeFreeVirtCpu / app.CPU
+              count: = cpuCount
+ 
+              // memory slot requirements
+              nodeFreeVirtMemory: = node.Memory - node.MemVirtUsage
+              if nodeFreeVirtMemory <app.Memory {
+                     mapAdd (selectCount, cNodeFreeVirtMemory, 1)
+                     continue
+              }
+              memVirtCount: = nodeFreeVirtMemory / app.Memory
+              if memVirtCount <count {
+                     count = memVirtCount
+              }
+ 
+              // actual memory requirements
+              if int (node.MemFree) <app.Memory {
+                     mapAdd (selectCount, cMemFree, 1)
+                     continue
+              }
+              memCount: = int (node.MemFree) / app.Memory
+              if memCount <count {
+                     count = memCount
+              }
+ 
+              if count> 0 {
+                     mapAdd (selectCount, cSuccess, 1)
                      saveNodetoVlan(nodeSlice, node, count)
               }
        }
@@ -475,8 +477,8 @@ func NewChooseNode(nodeSlice *nodeStorage.NodeSelectSlice, app *app.App, deployC
        if size == 0 {
               return ret
        }
-	   
-	   sort.Sort(allNodeSlice)
+ 
+       sort.Sort(allNodeSlice)
  
        for i := 0; i < deployCnt; {
  
@@ -510,7 +512,7 @@ func NewChooseNode(nodeSlice *nodeStorage.NodeSelectSlice, app *app.App, deployC
  
        return ret
 }
-
+ 
 type NodeSelect struct {
        Node  *nodeStorage.Node
        Count int
@@ -541,13 +543,13 @@ func saveNode(dcSelect DataCenterSelect, node *nodeStorage.Node, count int) {
                      },
                      Count: count,
               }
-			  
-			  dcSelect[node.Region] = regionSelect
+ 
+              dcSelect[node.Region] = regionSelect
  
               return
        }
  
-       region.Count = region.Count   count
+       region.Count = region.Count + count
        region.Nodes = append(region.Nodes, &NodeSelect{
               Node:  node,
               Count: count,

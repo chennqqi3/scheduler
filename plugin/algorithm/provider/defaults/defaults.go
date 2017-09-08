@@ -16,7 +16,7 @@ func defaultFilters() map[string]filter.FilterFunc {
        factory.RegisterFitFilter(filters, "VMTypeFilter", filter.VMTypeFilter)
        factory.RegisterFitFilter(filters, "CpuFilter", filter.CpuFilter)
        factory.RegisterFitFilter(filters, "VirtMemoryFilter", filter.VirtMemoryFilter)
-	   factory.RegisterFitFilter(filters, "VersionFilter", filter.VersionFileter)
+       factory.RegisterFitFilter(filters, "VersionFilter", filter.VersionFileter)
        // factory.RegisterFitFilter(filters, "RealMemoryFileter", filter.RealMemoryFileter)
  
        return filters

@@ -27,7 +27,7 @@ func NewDbMgr() error {
        orm.RegisterDataBase("default", "mysql", dbDsn, cfg.MaxIdle, cfg.MaxOpen)
        orm.RunSyncdb("default", false, true)
        db, err := orm.GetDB()
-if err != nil {
+       if err != nil {
               return fmt.Errorf("get default DB fail: %s", err.Error())
        }
        db.SetConnMaxLifetime(time.Duration(int64(cfg.MaxLifetime)) * time.Second)
@@ -47,7 +47,7 @@ func UpdateHostnameStatus(oneApp *app.App, hostname string, status string) error
 func UpdateRecoveryByName(appName string, recovery bool) error {
        return app.UpdateRecoveryByName(appName, recovery)
 }
-
+ 
 func GetAppByName(appName string) (*app.App, error) {
        return app.GetAppByName(appName)
 }
@@ -67,7 +67,7 @@ func GetRequireResourceState() (map[string]*app.App, error) {
 func GetHealthCheckState() (map[string]*app.App, error) {
        return app.GetHealthCheckState()
 }
-
+ 
 func GetAppByStatus(status string, moreStatus ...string) (map[string]*app.App, error) {
        return app.GetAppByStatus(status, moreStatus...)
 }

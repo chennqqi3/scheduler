@@ -1,5 +1,5 @@
-﻿package client
- 
+package client
+
 import (
        "bytes"
        "encoding/json"
@@ -23,7 +23,7 @@ import (
        "sync"
        "time"
 )
-
+ 
 const (
        ContentTypeHeader    = "Content-Type"
        XCfRouterErrorHeader = "X-Cf-Routererror"
@@ -54,7 +54,7 @@ func newOneClient(url string) oneClient {
               reqGen: rata.NewRequestGenerator(url, Routes),
        }
 }
-
+ 
 func (c *oneClient) SetClientTimeout(timeout int) {
        c.httpClient.Timeout = time.Duration(timeout) * time.Second
 }
@@ -70,7 +70,7 @@ func (c *oneClient) doRequest(requestName string, params rata.Params, queryParam
        }
        return c.do(req, response)
 }
-
+ 
 func (c *oneClient) createRequest(requestName string, params rata.Params, queryParams url.Values, request interface{}) (*http.Request, error) {
        requestJson, err := json.Marshal(request)
        if err != nil {
@@ -92,7 +92,7 @@ func (c *oneClient) createRequest(requestName string, params rata.Params, queryP
        req.Header.Set("Content-Type", "application/json")
        return req, nil
 }
-
+ 
 func (c *oneClient) do(req *http.Request, responseObject interface{}) error {
        res, err := c.httpClient.Do(req)
        if err != nil {
@@ -116,34 +116,34 @@ type Client struct {
        workers []oneClient
        lock    sync.RWMutex
 }
-
-//采用长连接的方式，因为批量创建的时候申请频繁。
-var LongClient = new(Client)
- 
-func NewClient(urls ...string) *Client {
-       for _, url := range urls {
-              worker := newOneClient(url)
-              LongClient.workers = append(LongClient.workers, worker)
-       }
-       go LongClient.sortByHealth(time.Minute)
-       return LongClient
+ 
+// use a long connection, because the batch is created frequently when the application.
+var LongClient = new (Client)
+ 
+func NewClient (urls ... string) * Client {
+       for _, url: = range urls {
+              worker: = newOneClient (url)
+              LongClient.workers = append (LongClient.workers, worker)
+       }
+       go LongClient.sortByHealth (time.Minute)
+       return LongClient
 }
- 
-func (c *Client) sortByHealth(duration time.Duration) {
-       type workerResult struct {
-              worker oneClient
-              err    error
-       }
-       for {
-              time.Sleep(duration)
-              workers := c.getWorkers()
-              if len(workers) <= 1 {
-                     return
-              }
-			  ch := make(chan workerResult, len(workers))
-              for _, worker := range workers {
-                     go func(worker oneClient) {
-                            err := worker.healthHandler()
+ 
+func (c * Client) sortByHealth (duration time.Duration) {
+       type workerResult struct {
+              worker oneClient
+              err error
+       }
+       for {
+              time.Sleep (duration)
+              workers: = c.getWorkers ()
+              if len (workers) <= 1 {
+                     return
+              }
+              ch: = make (chan workerResult, len (workers))
+              for _, worker: = range workers {
+                     go func (worker oneClient) {
+                            err: = worker.healthHandler()
                             ch <- workerResult{
                                    worker: worker,
                                    err:    err,
@@ -152,7 +152,7 @@ func (c *Client) sortByHealth(duration time.Duration) {
               }
  
               var good, bad []oneClient
-              for i := 0; i < len(workers); i   {
+              for i := 0; i < len(workers); i++ {
                      select {
                      case r := <-ch:
                             if r.err != nil {
@@ -162,7 +162,7 @@ func (c *Client) sortByHealth(duration time.Duration) {
                             }
                      }
               }
-			  workers = append(good, bad...)
+              workers = append(good, bad...)
  
               c.lock.Lock()
               c.workers = workers
@@ -183,13 +183,13 @@ func (c *Client) doRequest(requestName string, params rata.Params, queryParams u
        if len(workers) == 0 {
               return errors.New("no scheduler addresses provided")
        }
-	   errInfo := "all schedulers failed to return, errors: "
+       errInfo := "all schedulers failed to return, errors: "
        for _, worker := range workers {
               err := worker.doRequest(requestName, params, queryParams, request, response)
               if err == nil {
                      return nil
               }
-              errInfo  = err.Error()   ";"
+              errInfo += err.Error() + ";"
        }
        return errors.New(errInfo)
 }
@@ -198,7 +198,7 @@ func (c *Client) HealthHandler() error {
        err := c.doRequest(HealthHandle, nil, nil, nil, nil)
        return err
 }
-
+ 
 func (c *Client) NodesHandler() (map[string][]*node.Node, error) {
        nodes := make(map[string][]*node.Node)
        err := c.doRequest(NodesHandle, nil, nil, nil, &nodes)
@@ -216,7 +216,7 @@ func (c *Client) RealStateHandler() ([]*realstate.Container, error) {
        err := c.doRequest(RealStateHandle, nil, nil, nil, &containers)
        return containers, err
 }
-
+ 
 func (c *Client) AppHandler(AppName string) ([]*realstate.Container, error) {
        var containers []*realstate.Container
        err := c.doRequest(AppHandle, rata.Params{"name": AppName}, nil, nil, &containers)
@@ -234,7 +234,7 @@ func (c *Client) GetContainerStatus(taskID string) (*fastsetting.FastSetting, er
        err := c.doRequest(GetContainerStatus, rata.Params{"jobid": taskID}, nil, nil, &fastSetting)
        return fastSetting, err
 }
-
+ 
 func (c *Client) GetDockerLogs(AppName string, ctnrID string) ([]*createstate.DockerLogs, error) {
        var totalLogs []*createstate.DockerLogs
        err := c.doRequest(GetDockerLogs, nil, url.Values{"name": []string{AppName}, "id": []string{ctnrID}}, nil, &totalLogs)
@@ -252,7 +252,7 @@ func (c *Client) GlobalTopologyHandler() (*model.GlobalLevel, error) {
        err := c.doRequest(GlobalTopologyHandle, nil, nil, nil, &globaltopology)
        return globaltopology, err
 }
-
+ 
 func (c *Client) GetAppEvents(appName string, size int64) (*[]appevent.EventInfo, error) {
        var events *[]appevent.EventInfo
        v := url.Values{}
@@ -272,7 +272,7 @@ func (c *Client) ListArchiveEvents() (*[]msgengine.EventArchive, error) {
        err := c.doRequest(ListArchiveEvents, nil, nil, nil, &events)
        return events, err
 }
-
+ 
 func (c *Client) GetSchedulerConfig() (*[]SchedulerConfig, error) {
        workers := c.getWorkers()
        if len(workers) == 0 {
@@ -294,7 +294,7 @@ func (c *Client) GetSchedulerConfig() (*[]SchedulerConfig, error) {
                             if js, err := json.Marshal(config); err != nil {
                                    sconfig.Error = err.Error()
                                    glog.Infof("parse scheduler config failed:%v", err)
-								   } else {
+                            } else {
                                    sconfig.Config = string(js)
                             }
                      }
@@ -310,7 +310,7 @@ func (c *Client) GetSchedulerConfig() (*[]SchedulerConfig, error) {
        }
  
        var configs []SchedulerConfig
-       for i := 0; i < len(workers); i   {
+       for i := 0; i < len(workers); i++ {
               select {
               case result := <-ch:
                      configs = append(configs, result)
@@ -318,7 +318,7 @@ func (c *Client) GetSchedulerConfig() (*[]SchedulerConfig, error) {
        }
        return &configs, nil
 }
-
+ 
 func handleJSONResponse(res *http.Response, responseObject interface{}) error {
        if res.StatusCode > 299 {
               body, err := ioutil.ReadAll(res.Body)
@@ -336,7 +336,7 @@ func handleJSONResponse(res *http.Response, responseObject interface{}) error {
        }
        return nil
 }
-
+ 
 func handleNonJSONResponse(res *http.Response) error {
        if res.StatusCode > 299 {
               var errResponse []byte
@@ -349,3 +349,4 @@ func handleNonJSONResponse(res *http.Response) error {
  
        return nil
 }
+

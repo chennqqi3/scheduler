@@ -1,5 +1,5 @@
-﻿#!/bin/bash
- 
+#!/bin/bash
+
 cp -r ../common Godeps/_workspace/src/github-beta.huawei.com/hipaas
  
 echo "!!! golint begin ..."
@@ -26,3 +26,4 @@ echo "!!! go build begin ..."
 godep go build
 echo "!!! go build end"
 echo
+

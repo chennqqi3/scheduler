@@ -19,7 +19,7 @@ import (
        "strings"
        "math/rand"
 )
-
+ 
 var _ = Describe("Containers Service suite test",func(){
        var (
               err error
@@ -42,7 +42,7 @@ var _ = Describe("Containers Service suite test",func(){
                             Datacenter:    Config().ConsulServer.ConsulDatacenter,
                      }
                      consulClient,err = api.NewClient(&consulcfg)
-					 if nil != err {
+                     if nil != err {
                             fmt.Printf("New consul client failed,Error: %v\n",err)
                      }
               })
@@ -68,7 +68,7 @@ var _ = Describe("Containers Service suite test",func(){
                      CPU:         1,
                      Memory:      128,
                      Instance: 1,
-					 Image: storageapp.Image{
+                     Image: storageapp.Image{
                             DockerImageURL:    "9.91.17.17:5000/huangcuiyang/dls",
                             DockerLoginServer: "",
                             DockerUser:        "",
@@ -85,7 +85,7 @@ var _ = Describe("Containers Service suite test",func(){
                      {
                             ID: randomStr("hcyctnido",14),
                             // IP: strings.Split(Config().ConsulServer.ConsulAddress,":")[0],
-							IP: "127.0.0.1",
+                            IP: "127.0.0.1",
                             AppName: app.Name,
                             Status: "Up",
                             AppType: storageapp.AppTypeLRC,
@@ -103,7 +103,7 @@ var _ = Describe("Containers Service suite test",func(){
        AfterEach(func(){
  
        })
-	   defer GinkgoRecover()
+       defer GinkgoRecover()
  
        It("ParseConfig, then Start CtnrServiceDiscover",func(){
               // g parse cfg
@@ -124,7 +124,7 @@ var _ = Describe("Containers Service suite test",func(){
                      Task:           pool,
                      PortType:       appPortType,
                      Prefix:         Config().ConsulService.CtnrServicePrefix,
-					 RegEventChan:   make(chan []byte, 300),
+                     RegEventChan:   make(chan []byte, 300),
                      DeregEventChan: make(chan []byte, 300),
               }
               go csd.WaitEvent()
@@ -145,27 +145,27 @@ var _ = Describe("Containers Service suite test",func(){
                      By("Add Containers to consul",func(){
                             // set app infos
                             app.Status = "Started"
-                            portinfos := []realstate.PortInfo{
-                                   {
-										Portname: "monitor",
-                                          Ports: []docker.PortBinding{
-                                                 {
-                                                        HostIP: "127.0.0.1",
-                                                        HostPort: "60000",
-                                                 },
-                                          },
-                                          OriginPort: "8080",
-                                   },
-                            }
-                            for k,_ := range containers {
-                                   containers[k].PortInfos = portinfos
-                            }
- 
-                            // make msg infos
-                            msg := ME.AppStatusToStartedData{
+                            portinfos := []{realstate.PortInfo
+                                   {
+                                          Scanner: "monitor",
+                                          Ports: [] {docker.PortBinding
+                                                 {
+                                                        HostIP: "127.0.0.1"
+                                                        HostPort: "60000",
+                                                 },
+                                          },
+                                          OriginPort: "8080",
+                                   },
+                            }
+                            for k, _ range = {containers
+                                   containers [k] = .PortInfos portinfos
+                            }
+ 
+                            // make msg infos
+                            msg = ME.AppStatusToStartedData{
                                    App: app,
                                    Containers: containers,
-								   Birthday: birthday,
+                                   Birthday: birthday,
                                    Message: "test",
                             }
                             // send App started event                        
@@ -177,9 +177,9 @@ var _ = Describe("Containers Service suite test",func(){
                             results,err := consulGetServices()
                             Expect(err).NotTo(HaveOccurred())
                             tmp_desired := 0
-							for _,agent := range results {
+                            for _,agent := range results {
                                    if strings.Contains(agent.Service,app.Name) {
-                                          tmp_desired  = 1
+                                          tmp_desired += 1
                                    }
                             }
                             Expect(tmp_desired).To(Equal(len(containers)))
@@ -193,7 +193,7 @@ var _ = Describe("Containers Service suite test",func(){
                                           Message: "test",
                                    }
                                    dat,err := json.Marshal(msg)
-								   Expect(err).NotTo(HaveOccurred())
+                                   Expect(err).NotTo(HaveOccurred())
                                    csd.DeregEventChan <- dat                           
                             }
  
@@ -204,7 +204,7 @@ var _ = Describe("Containers Service suite test",func(){
                             tmp_desired := 0
                             for _,agent := range results {
                                    if strings.Contains(agent.Service,app.Name) {
-                                          tmp_desired  = 1
+                                          tmp_desired += 1
                                           if tmp_desired > 0 {
                                                  break
                                           }
@@ -215,4 +215,3 @@ var _ = Describe("Containers Service suite test",func(){
               })
        })
 })
-

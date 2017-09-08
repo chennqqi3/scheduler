@@ -19,7 +19,7 @@ func New() http.Handler {
               client.AppHandle:       route(httpHandler.AppHandler),
               //            client.AppMonitHandle:       route(httpHandler.AppMonit),
               //            client.VMMonitHandle:        route(httpHandler.VMMonit),
-			  client.GlobalTopologyHandle: route(httpHandler.GlobalTopologyInfo),
+              client.GlobalTopologyHandle: route(httpHandler.GlobalTopologyInfo),
               client.SetContainerStatus:   route(httpHandler.SetContainerStatus),
               client.GetContainerStatus:   route(httpHandler.GetContainerStatus),
               client.GetDockerLogs:        route(httpHandler.GetDockerLogs),
@@ -29,9 +29,10 @@ func New() http.Handler {
               client.ListArchiveEvents:    route(httpHandler.ListArchiveEvents),
               client.GetSchedulerConfig:   route(httpHandler.GetSchedulerConfig),
        }
-	   handler, err := rata.NewRouter(client.Routes, actions)
+ 
+       handler, err := rata.NewRouter(client.Routes, actions)
        if err != nil {
-              panic("unable to create router: "   err.Error())
+              panic("unable to create router: " + err.Error())
        }
  
        return handler
@@ -40,4 +41,3 @@ func New() http.Handler {
 func route(f func(w http.ResponseWriter, r *http.Request)) http.Handler {
        return http.HandlerFunc(f)
 }
-

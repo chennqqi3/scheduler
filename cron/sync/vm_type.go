@@ -20,7 +20,7 @@ import (
        "github-beta.huawei.com/hipaas/scheduler/g"
        "github-beta.huawei.com/hipaas/scheduler/plugin/algorithm"
 )
-
+ 
 //vm container
 type VMManager struct {
        SyncController
@@ -46,7 +46,7 @@ func NewVMManager(
        return &VMManager{
               SyncController: SyncController{
                      RealState:     realState,
-					 CreatingState: creatingState,
+                     CreatingState: creatingState,
                      Nodes:         nodes,
                      Config:        config,
                      Algo:          algo,
@@ -67,9 +67,9 @@ func (c *VMManager) StatusCompare(app *appStorage.App) error {
               containers := c.RealState.Containers(app.Name)
               for _, container := range containers {
                      c.UpdateHostnameStatusFunc(app, container.Hostname, appStorage.AppStatusCreateSuccess)
-                     ctnrUpCount  
+                     ctnrUpCount++
               }
-			  if ctnrUpCount == len(app.Hostnames) {
+              if ctnrUpCount == len(app.Hostnames) {
                      glog.Infof("status compare success, name: %s, update status to %s", app.Name, appStorage.AppStatusCreateSuccess)
                      c.UpdateAppStatus(app, appStorage.AppStatusCreateSuccess, "")
               } else {
@@ -85,7 +85,8 @@ func (c *VMManager) StatusCompare(app *appStorage.App) error {
  
                      if errHaveOccurred {
                             glog.Errorf("VM type app create fail, name: %s", app.Name)
-							c.UpdateAppStatus(app, appStorage.AppStatusCreateContainerFail, "VM type app create fail, for details, see hostname logs.")
+                            c.UpdateAppStatus(app, appStorage.AppStatusCreateContainerFail,
+                                   "VM type app create fail, for details, see hostname logs.")
  
                             // IP RollBack
                             for _, hostname := range app.Hostnames {
@@ -102,8 +103,8 @@ func (c *VMManager) StatusCompare(app *appStorage.App) error {
                             glog.Warningf("virNode is not exist, IP: %s", node.IP)
                             continue
                      }
-					 virNode.CPUVirtUsage = virNode.CPUVirtUsage   node.Cpu
-                     virNode.MemVirtUsage = virNode.MemVirtUsage   node.Memory
+                     virNode.CPUVirtUsage = virNode.CPUVirtUsage + node.Cpu
+                     virNode.MemVirtUsage = virNode.MemVirtUsage + node.Memory
                      g.RealNodeState.UpdateNode(virNode)
               }
               return nil
@@ -127,7 +128,7 @@ func (c *VMManager) CreateContainers(app *appStorage.App) error {
  
        return err
 }
-
+ 
 func (c *VMManager) UpdateContainers(app *appStorage.App) error {
        if app.Status == appStorage.AppStatusCreateContainerFail {
               return nil
@@ -149,7 +150,8 @@ func (c *VMManager) UpdateContainers(app *appStorage.App) error {
               glog.Errorf("update containers, statecompare fail: %v", err)
               return err
        }
-	   if len(delContainerSlice) > 0 {
+ 
+       if len(delContainerSlice) > 0 {
               c.DropContainers(app.Name, app.Instance, delContainerSlice)
        }
  
@@ -168,7 +170,7 @@ func (c *VMManager) UpdateContainers(app *appStorage.App) error {
        err = c.runContainersByHostname(app, deployHostname)
        return err
 }
-
+ 
 func (c *VMManager) DropContainers(appName string, appInstance int, containers []*realstate.Container) error {
        //creating status compare
        callBack := func() error {
@@ -192,7 +194,7 @@ func (c *VMManager) DropContainers(appName string, appInstance int, containers [
               }
               return nil
        }
-	   finish := func(status *realstate.DockerStatusStore) error {
+       finish := func(status *realstate.DockerStatusStore) error {
               return nil
        }
        err := c.CreatingStatus(appName, 0, len(containers), callBack, finish)
@@ -211,7 +213,7 @@ func (c *VMManager) runContainersByHostname(app *appStorage.App, hostnames []str
               ipCount, err := c.Algo.Algorithm.Schedule(app, len(hostnames))
               if err != nil {
                      glog.Error("Algorithm.Schedule error: ", err)
-					 c.UpdateAppStatus(app, appStorage.AppStatusPending, err.Error())
+                     c.UpdateAppStatus(app, appStorage.AppStatusPending, err.Error())
                      ME.NewEventReporter(ME.ExecResult, ME.ExecResultData{
                             Reason:   "Algorithm.Schedule error",
                             AppName:  app.Name,
@@ -225,7 +227,7 @@ func (c *VMManager) runContainersByHostname(app *appStorage.App, hostnames []str
  
               for selectNodeIP, count := range ipCount {
                      nodeAppDeployInfo := &node.NodeAppDeployInfo{App: app}
-					 for k := 0; k < count; k++ {
+                     for k := 0; k < count; k++ {
                             hostname := hostnames[hostLen-1]
                             hostLen--
                             network, err := c.findNetworkByHostname(hostname)
@@ -241,7 +243,8 @@ func (c *VMManager) runContainersByHostname(app *appStorage.App, hostnames []str
                                           return id + "_" + app.GetSubHostname(hostname)
                                    }
                             }
-							deployNode := &node.DeployInfo{
+ 
+                            deployNode := &node.DeployInfo{
                                    Hostname:    *network.Hostname,
                                    Ctnrname:    name(),
                                    Region:      network.Region,
@@ -258,7 +261,7 @@ func (c *VMManager) runContainersByHostname(app *appStorage.App, hostnames []str
               }
               return nil
        }
-	   finish := func(status *realstate.DockerStatusStore) error {
+       finish := func(status *realstate.DockerStatusStore) error {
               for _, node := range status.Node {
                      virNode, exist := g.RealNodeState.GetNode(node.IP)
                      if !exist {
@@ -281,8 +284,8 @@ func (c *VMManager) getAvailableIpAddress(hostname string, subdomain string, reg
               Subdomain: subdomain,
               Region:    region,
        }
-
-networkApply, err := c.sdkOfNetservice.ApplyNetwork(apply)
+ 
+       networkApply, err := c.sdkOfNetservice.ApplyNetwork(apply)
        if err != nil {
               return nil, err
        }
@@ -301,7 +304,7 @@ func (c *VMManager) releaseIP(container *realstate.Container) error {
        }
        return nil
 }
-
+ 
 func (c *VMManager) releaseIPRequest(hostname string, subdomain string, region string) error {
        glog.Infof("release container ip resource, hostname: %s, subdomain: %s, region: %s",
               hostname, subdomain, region)
@@ -319,7 +322,7 @@ func (c *VMManager) releaseIPRequest(hostname string, subdomain string, region s
        }
        return nil
 }
-
+ 
 func (c *VMManager) findNetworkByHostname(hostname string) (network.Network, error) {
        return c.sdkOfNetservice.FindNetworkByHostname(hostname)
 }
@@ -330,14 +333,14 @@ func (c *VMManager) RequireResource(app *appStorage.App) error {
  
        for _, hostname := range app.Hostnames {
               if hostname.Status == appStorage.AppStatusPending {
-                     applySuccess  
+                     applySuccess++
                      continue
               }
  
-              foundNetwork, err := c.findNetworkByHostname(hostname.Hostname   "."   hostname.Subdomain)
+              foundNetwork, err := c.findNetworkByHostname(hostname.Hostname + "." + hostname.Subdomain)
               if err != nil {
                      glog.Infof("findNetworkByHostname failed, hostname: %s, err: %v", hostname.Hostname, err)
-					 errMessage := fmt.Sprintf("hostname: %v, err: %v", hostname, err)
+                     errMessage := fmt.Sprintf("hostname: %v, err: %v", hostname, err)
                      errMessages = append(errMessages, errMessage)
               }
  
@@ -350,7 +353,8 @@ func (c *VMManager) RequireResource(app *appStorage.App) error {
                             errMessages = append(errMessages, errMessage)
                             continue
                      }
-					 if !pass {
+ 
+                     if !pass {
                             glog.Infof("useless ip: %s, use for creating new VM, name: %s, hostname: %s", foundNetwork.Ip, app.Name, hostname)
                             c.UpdateHostnameStatusFunc(app, hostname.Hostname+"."+hostname.Subdomain, appStorage.AppStatusPending)
                             applySuccess++
@@ -364,7 +368,8 @@ func (c *VMManager) RequireResource(app *appStorage.App) error {
                      }
                      continue
               }
-			  if foundNetwork.Status != network.REQUIRING {
+ 
+              if foundNetwork.Status != network.REQUIRING {
                      glog.Info("require ip resource for: ", hostname)
                      _, err = c.getAvailableIpAddress(hostname.Hostname, hostname.Subdomain, app.Region)
                      if err != nil {
@@ -382,8 +387,7 @@ func (c *VMManager) RequireResource(app *appStorage.App) error {
               tries := c.requireResourceTries[app.Id]
               return tries
        }
-	   
-	   deleteTries := func() {
+       deleteTries := func() {
               c.requireResourceTriesLock.Lock()
               defer c.requireResourceTriesLock.Unlock()
               delete(c.requireResourceTries, app.Id)
@@ -399,7 +403,8 @@ func (c *VMManager) RequireResource(app *appStorage.App) error {
               deleteTries()
               err := fmt.Errorf(`app IP resource require fail, name: %s, details: "%s"`, app.Name, strings.Join(errMessages, ";"))
               c.UpdateAppStatus(app, appStorage.AppStatusIPResourceRequireFail, err.Error())
-			  // IP Rollback
+ 
+              // IP Rollback
               glog.Warningf("Requiring IP resource for app %s failed, rolling back", app.Name)
               for _, hostname := range app.Hostnames {
                      c.releaseIPRequest(hostname.Hostname, hostname.Subdomain, app.Region)
@@ -417,7 +422,7 @@ func (c *VMManager) healthCheckOneContainer(container *realstate.Container) (ok 
                      }
                      return
               }
-			  tries, err := g.HealthCheckTries.Increase(container)
+              tries, err := g.HealthCheckTries.Increase(container)
               if err != nil {
                      glog.Errorf("increase health check tries error: %s", err.Error())
                      return
@@ -432,7 +437,7 @@ func (c *VMManager) healthCheckOneContainer(container *realstate.Container) (ok 
                             Birthday: time.Now(),
                             Message:  "health check failed over the max tries.",
                      })
-					 c.UpdateAppStatusByNameFunc(container.AppName, appStorage.AppStatusCreateSuccess, errInfo)
+                     c.UpdateAppStatusByNameFunc(container.AppName, appStorage.AppStatusCreateSuccess, errInfo)
                      if err := g.HealthCheckTries.Delete(container); err != nil {
                             glog.Errorf("delete health check tries error: %s", err.Error())
                      }
@@ -443,12 +448,12 @@ func (c *VMManager) healthCheckOneContainer(container *realstate.Container) (ok 
  
        switch container.HealthMode {
        case realstate.CTNR_HEALTH_ALIVE:
-              return true	  
+              return true
        case realstate.CTNR_HEALTH_UNKNOWN:
               glog.Warningf("health check ctnrid:%s ;appname:%s ; nodeip:%s; ctnrip:%s ; status unknown. ",
                      container.ID, container.AppName, container.IP, container.ContainerIP)
               return false
-	   case realstate.CTNR_HEALTH_DEAD:
+       case realstate.CTNR_HEALTH_DEAD:
               glog.Errorf("health check container failed. ctnrid:%s ;appname:%s ; nodeip:%s; ctnrip:%s ",
                      container.ID, container.AppName, container.IP, container.ContainerIP)
               return false
@@ -459,7 +464,7 @@ func (c *VMManager) healthCheckOneContainer(container *realstate.Container) (ok 
        }
  
 }
-
+ 
 func (c *VMManager) HealthCheck(app *appStorage.App) error {
        if !c.RealState.RealAppExists(app.Name) {
               return fmt.Errorf("real state do not exist for app: %s", app.Name)
@@ -474,7 +479,7 @@ func (c *VMManager) HealthCheck(app *appStorage.App) error {
                             if c.healthCheckOneContainer(container) {
                                    passed++
                                    err := c.UpdateHostnameStatusFunc(app, container.Hostname, appStorage.AppStatusStartSuccess)
-								   if err != nil {
+                                   if err != nil {
                                           glog.Errorf("update hostname: %s status to: %s fail: %v",
                                                  container.Hostname,
                                                  appStorage.AppStatusStartSuccess, err)
@@ -488,7 +493,7 @@ func (c *VMManager) HealthCheck(app *appStorage.App) error {
                      err := c.UpdateAppStatus(app, appStorage.AppStatusStartSuccess, "")
                      if err != nil {
                             glog.Errorf("update app: %s status to: %s fail: %v", app.Name, appStorage.AppStatusStartSuccess, err)
-							return err
+                            return err
                      }
                      ctnrs := make([]realstate.Container, 0)
                      for _, ctnr := range containers {

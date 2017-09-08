@@ -28,7 +28,7 @@ type DockerInstance struct {
        App        *app.App
        DeployInfo *node.DeployInfo
 }
-
+ 
 type DockerRuntimeProvider interface {
        DockerExecAsync(exec string, arg interface{}, beforeExec func() error, afterExec func(error))
        GetDockerLogs(appName string, ctnrID string) ([]*createstate.DockerLogs, error)
@@ -48,7 +48,7 @@ func newDockerManager() *dockerManager {
 // Singleton pattern
 var dockerManagerInterface DockerRuntimeProvider
 var once sync.Once
-
+ 
 func GetDockerManager() DockerRuntimeProvider {
        once.Do(func() {
               dockerManagerInterface = newDockerManager()
@@ -106,7 +106,7 @@ func (this *dockerManager) DockerExecAsync(exec string, arg interface{}, beforeE
 func (this *dockerManager) afterDockerDrop(appName string, container *realstate.Container) {
        g.RealState.DeleteContainer(appName, container)
 }
-
+ 
 // DockerRun run a docker container on the client[ip]
 func (this *dockerManager) dockerExecAsync(exec func() error, beforeExec func() error, afterExec func(error)) {
        this.acquire()
@@ -126,7 +126,8 @@ func (this *dockerManager) release() { <-this.sem }
 // DockerRun run a docker container on the client[ip]
 func (this *dockerManager) dockerCreate(app *app.App, deployInfo *node.DeployInfo) error {
        glog.Infof("create container. name: %s, node ip: %s", app.Name, deployInfo.AgentIP)
-	   agentRPCAddr := fmt.Sprintf("%s:%d", deployInfo.AgentIP, g.Config().AgentRPCPort)
+ 
+       agentRPCAddr := fmt.Sprintf("%s:%d", deployInfo.AgentIP, g.Config().AgentRPCPort)
        client, err := rpc.Dial("tcp", agentRPCAddr)
        if err != nil {
               return err
@@ -150,7 +151,7 @@ func (this *dockerManager) dockerCreate(app *app.App, deployInfo *node.DeployInf
        // now := time.Now()
        // glog.Debugf("begin to run docker run: %v", time.Now())
        err = client.Call("Execute.NewDockRun", req, &resp)
-	   if err != nil {
+       if err != nil {
               glog.Errorf("Create app fail, ip: %s, err: %v", deployInfo.AgentIP, err)
               return err
        }
@@ -171,7 +172,8 @@ func (this *dockerManager) dockerDrop(c *realstate.Container) error {
               return err
        }
        defer client.Close()
-	   sign, err := encrypt()
+ 
+       sign, err := encrypt()
        if err != nil {
               glog.Error("encrypt fail:", err)
               return err
@@ -190,7 +192,7 @@ func (this *dockerManager) dockerDrop(c *realstate.Container) error {
               glog.Errorf("docker.RemoveContainer fail, ip: %s, err: %v", c.IP, err)
               return err
        }
-	   glog.Infof("drop container success, name: %s, id: %s", c.AppName, c.ID)
+       glog.Infof("drop container success, name: %s, id: %s", c.AppName, c.ID)
        this.afterDockerDrop(c.AppName, c)
        return nil
 }
@@ -212,7 +214,8 @@ func (this *dockerManager) dockerStop(ctnr *realstate.Container) error {
               return err
        }
        ctnr.Sign = sign
-	   var resp createstate.RunContainerResponse
+ 
+       var resp createstate.RunContainerResponse
        err = client.Call("Execute.DockerStop", ctnr, &resp)
        if err != nil {
               glog.Errorf("docker.StopContainer fail, ip: %s, err: %v", ctnr.IP, err)
@@ -234,7 +237,8 @@ func (this *dockerManager) dockerRestart(ctnr *realstate.Container) error {
               return err
        }
        defer client.Close()
-	   sign, err := encrypt()
+ 
+       sign, err := encrypt()
        if err != nil {
               glog.Error("encrypt fail:", err)
               return err
@@ -258,7 +262,8 @@ func (this *dockerManager) GetDockerLogs(appName string, ctnrID string) ([]*crea
        if len(mapCtnrs) == 0 {
               return nil, fmt.Errorf("Can't find any container by this app name: %s", appName)
        }
-	   totalDockerLogs := []*createstate.DockerLogs{}
+ 
+       totalDockerLogs := []*createstate.DockerLogs{}
        if ctnrID != "" {
               if value, exist := mapCtnrs[ctnrID]; exist {
                      logs, err := this.dockerLogs(value)
@@ -272,7 +277,7 @@ func (this *dockerManager) GetDockerLogs(appName string, ctnrID string) ([]*crea
               }
               return nil, fmt.Errorf("ContainerID(%s) isn't matched appName(%s)", ctnrID, appName)
        }
-	   for _, ctnr := range mapCtnrs {
+       for _, ctnr := range mapCtnrs {
               logs, err := this.dockerLogs(ctnr)
               if err != nil {
                      glog.Errorf("dockerLogs fail, name: %s, id: %s err: %v", appName, ctnr.ID, err)
@@ -293,7 +298,7 @@ func (this *dockerManager) dockerLogs(ctnr *realstate.Container) (*string, error
               glog.Error("dialing fail: ", err)
               return nil, err
        }
-	   defer client.Close()
+       defer client.Close()
  
        sign, err := encrypt()
        if err != nil {
@@ -317,7 +322,7 @@ func (this *dockerManager) NodeTaskCreateCtnr(nodeIP string, appsDeployInfos []*
               if nil != err {
                      for _, appDeployInfos := range appsDeployInfos {
                             for _, deployInfo := range appDeployInfos.DeployInfos {
-							ME.NewEventReporter(ME.ExecResult, ME.ExecResultData{
+                                   ME.NewEventReporter(ME.ExecResult, ME.ExecResultData{
                                           Reason:   "NodeTaskCreateCtnr failed",
                                           AppName:  appDeployInfos.App.Name,
                                           NodeIP:   nodeIP,
@@ -334,7 +339,7 @@ func (this *dockerManager) NodeTaskCreateCtnr(nodeIP string, appsDeployInfos []*
        nodeTask := &createstate.NodeTaskCreateCtnr{}
        if g.Config().SignMsg.Switch {
        //     var err error
-	   nodeTask.Sign, err = encrypt()
+              nodeTask.Sign, err = encrypt()
               if err != nil {
                      glog.Error("encrypt sign string fail: ", err)
                      return err
@@ -351,7 +356,8 @@ func (this *dockerManager) NodeTaskCreateCtnr(nodeIP string, appsDeployInfos []*
                      }
                      opt.Sign = nodeTask.Sign
                      appTask.Opts = append(appTask.Opts, opt)
-					 ME.NewEventReporter(ME.CreateOneContainerForAnyReason,
+ 
+                     ME.NewEventReporter(ME.CreateOneContainerForAnyReason,
                             ME.CreateOneContainerForAnyReasonData{
                                    AppName:  appDeployInfos.App.Name,
                                    NodeIP:   nodeIP,
@@ -369,7 +375,8 @@ func (this *dockerManager) NodeTaskCreateCtnr(nodeIP string, appsDeployInfos []*
               return err
        }
        defer client.Close()
-	   req := nodeTask
+ 
+       req := nodeTask
        resp := &createstate.RPCCommonRespone{}
        err = client.Call("Execute.NodeTaskCreateCtnr", req, resp)
        if err != nil {

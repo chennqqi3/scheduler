@@ -20,7 +20,7 @@ const (
        StatusCreateTimeOut    = 600
        StatusCreateTimeAgeing = StatusCreateTimeOut * 2
 )
-
+ 
 type MachineCount map[string]int
 type FailedFilterMap map[string]string
 type GetAppAllContainersFunc func(appName string) (cs []*realstate.Container)
@@ -35,6 +35,7 @@ type Config struct {
 type ScheduleAlgorithm interface {
        Schedule(app *app.App, deployCnt int) (count MachineCount, err error)
 }
+ 
 type genericScheduler struct {
        filterFunctionMap    map[string]filter.FilterFunc
        strategyFunctionMap  map[string]strategy.StrategyFunc
@@ -44,7 +45,7 @@ type genericScheduler struct {
        Mutex                sync.RWMutex
        dockerStatusUpdate   DockerStatusUpdateFunc
 }
-
+ 
 func NewGenericScheduler(filters map[string]filter.FilterFunc, strategies map[string]strategy.StrategyFunc, getContainers GetAppAllContainersFunc, getMinions GetAllMinionsFunc, getVirtalMinions GetAllVirtalMinionsFunc, dockerStatusUpdate DockerStatusUpdateFunc) ScheduleAlgorithm {
        return &genericScheduler{
               filterFunctionMap:    filters,
@@ -57,7 +58,7 @@ func NewGenericScheduler(filters map[string]filter.FilterFunc, strategies map[st
 }
  
 var ErrDeployCnt = fmt.Errorf("deployCnt is less than 0")
-
+ 
 func (scheduler *genericScheduler) Schedule(app *app.App, deployCnt int) (count MachineCount, err error) {
        if deployCnt <= 0 {
               return MachineCount{}, ErrDeployCnt
@@ -73,8 +74,8 @@ func (scheduler *genericScheduler) Schedule(app *app.App, deployCnt int) (count 
        if err != nil {
               return MachineCount{}, err
        }
-	   
-	   if filterCount < deployCnt {
+ 
+       if filterCount < deployCnt {
               errString := "fail: "
               for k, _ := range failedPredicateMap {
                      errString = fmt.Sprintf("%s ", k)
@@ -95,7 +96,8 @@ func (scheduler *genericScheduler) Schedule(app *app.App, deployCnt int) (count 
        if err != nil {
               return MachineCount{}, err
        }
-	   virtualNodes := []*realstate.VirtualNode{}
+ 
+       virtualNodes := []*realstate.VirtualNode{}
        for ip, count := range ipCount {
               virtualNodes = append(virtualNodes, &realstate.VirtualNode{
                      IP:     ip,
@@ -119,7 +121,8 @@ func (scheduler *genericScheduler) ListMinions() (nodes []*node.Node, err error)
        if err != nil {
               return nodes, err
        }
-	   // map[string]*executor.VirtualNode
+ 
+       // map[string]*executor.VirtualNode
        allVirtalNodes, err := scheduler.getAllVirtalMinions()
        if err != nil {
               return nodes, err
@@ -127,8 +130,8 @@ func (scheduler *genericScheduler) ListMinions() (nodes []*node.Node, err error)
  
        for _, node := range allNodes {
               if val, ok := allVirtalNodes[node.IP]; ok {
-                     node.CPUVirtUsage = node.CPUVirtUsage   val.Cpu
-                     node.MemVirtUsage = node.MemVirtUsage   val.Memory
+                     node.CPUVirtUsage = node.CPUVirtUsage + val.Cpu
+                     node.MemVirtUsage = node.MemVirtUsage + val.Memory
               }
        }
  
@@ -139,7 +142,8 @@ func GetBestHosts(priorityLists *strategy.MinionPriorityList, deployCnt int) (Ma
        if deployCnt <= 0 {
               return MachineCount{}, ErrDeployCnt
        }
-	   machineCount := MachineCount{}
+ 
+       machineCount := MachineCount{}
        sort.Sort(sort.Reverse(*priorityLists))
        /*****************此处需要优化，az均匀部署算法********************/
        count := 0
@@ -148,15 +152,15 @@ func GetBestHosts(priorityLists *strategy.MinionPriorityList, deployCnt int) (Ma
        azNum := 0
        total := 0
        for _, minionPriority := range *priorityLists {
-              total = total   minionPriority.Count
+              total = total + minionPriority.Count
               if _, exist := azCount[minionPriority.Node.AvailableZone]; !exist {
                      azCount[minionPriority.Node.AvailableZone] = minionPriority.Count
-                     azNum  
+                     azNum++
               } else {
-                     azCount[minionPriority.Node.AvailableZone] = azCount[minionPriority.Node.AvailableZone]   minionPriority.Count
+                     azCount[minionPriority.Node.AvailableZone] = azCount[minionPriority.Node.AvailableZone] + minionPriority.Count
               }
        }
-	   if total < deployCnt {
+       if total < deployCnt {
               return MachineCount{}, fmt.Errorf("total count is %d but you want to deploy %d, not enough", total, deployCnt)
        }
        maxcount := 0
@@ -184,7 +188,7 @@ func GetBestHosts(priorityLists *strategy.MinionPriorityList, deployCnt int) (Ma
               }
        }
        /*****************此处需要优化，az均匀部署算法********************/
-	   for {
+       for {
               isSelect := false
  
               for _, minionPriority := range *priorityLists {
@@ -215,7 +219,7 @@ func GetBestHosts(priorityLists *strategy.MinionPriorityList, deployCnt int) (Ma
        // return machineCount, nil
  
 }
-
+ 
 func strategyNodes(app *app.App, strategyMap map[string]strategy.StrategyFunc, priorityLists *strategy.MinionPriorityList, existContainers strategy.ContainerList) (*strategy.MinionPriorityList, error) {
  
        for _, strategy := range strategyMap {
@@ -232,7 +236,8 @@ func findNodesThatFit(app *app.App, filterMap map[string]filter.FilterFunc, mini
        successFiltered := strategy.MinionPriorityList{}
        failedPredicateMap := FailedFilterMap{}
        allCount := 0
-	   for _, minion := range minions {
+ 
+       for _, minion := range minions {
               minionCount := filter.UnDefineMax
  
               tmpPriority := strategy.MinionPriority{
@@ -249,7 +254,7 @@ func findNodesThatFit(app *app.App, filterMap map[string]filter.FilterFunc, mini
                      }
  
                      if !fit {
-                            mapStringAdd(failedPredicateMap, name "_failed", minion.IP)
+                            mapStringAdd(failedPredicateMap, name+"_failed", minion.IP)
                             isSuccess = false
                             break
                      }
@@ -258,10 +263,11 @@ func findNodesThatFit(app *app.App, filterMap map[string]filter.FilterFunc, mini
                             minionCount = count
                      }
               }
-			  if isSuccess {
+ 
+              if isSuccess {
                      tmpPriority.Count = minionCount
  
-                     allCount  = minionCount
+                     allCount += minionCount
                      successFiltered = append(successFiltered, &tmpPriority)
               }
        }
@@ -271,7 +277,7 @@ func findNodesThatFit(app *app.App, filterMap map[string]filter.FilterFunc, mini
  
 func mapStringAdd(selectCount map[string]string, key string, src string) {
        if _, ok := selectCount[key]; ok {
-              selectCount[key] = selectCount[key]   ","   src
+              selectCount[key] = selectCount[key] + "," + src
        } else {
               selectCount[key] = src
        }

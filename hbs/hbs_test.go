@@ -22,28 +22,31 @@ var _ = Describe("Hbs test",func () {
               g.FlagInit()
               err := g.ParseConfig(testcfg)
               if err != nil {
-                     Fail("g.ParseConfig fail: " err.Error())
+                     Fail("g.ParseConfig fail: "+err.Error())
               }
-			  g.RedisConnPool,err = redisoperate.InitRedisConnPool(g.Config().Redis)
+ 
+              g.RedisConnPool,err = redisoperate.InitRedisConnPool(g.Config().Redis)
               if err != nil {
-                     Fail("g.RedisConnPool InitRedisConnPool fail: " err.Error())
+                     Fail("g.RedisConnPool InitRedisConnPool fail: "+err.Error())
               }
  
  
               if err = g.NewDbMgr(); nil != err {
-                     Fail("Init mysql conn pool fail: " err.Error())
+                     Fail("Init mysql conn pool fail: "+err.Error())
               }
  
               driver := "redis"
               g.RealState,err  = realstate.NewSafeRealState(driver, g.RedisConnPool)
               if err != nil {
                      Fail("RealState init failed")
-              } 
+              }
+ 
               g.RealNodeState,err = storagenode.NewSafeNodeState(driver, g.RedisConnPool)
               if err != nil {
                      Fail("RealNodeState init failed")
               }
-			  g.RealMinionState,err = realstate.NewSafeRealState(driver, g.RedisConnPool)
+ 
+              g.RealMinionState,err = realstate.NewSafeRealState(driver, g.RedisConnPool)
               if err != nil {
                      Fail("RealMinionState init failed")
               }            
@@ -62,7 +65,8 @@ var _ = Describe("Hbs test",func () {
                      client, err := rpc.Dial("tcp", tmpRPCAddr)
                      Expect(err).NotTo(HaveOccurred())
                      Expect(client).NotTo(BeNil())
-					 var response storagenode.NodeResponse
+ 
+                     var response storagenode.NodeResponse
                      err = client.Call("NodeState.NodeDown", "127.0.0.1", &response)              
                      Expect(err).NotTo(HaveOccurred())
                      Expect(response.Code).To(Equal(0))

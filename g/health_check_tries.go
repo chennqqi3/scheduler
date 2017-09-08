@@ -28,8 +28,8 @@ func (h *healthCheckTries) Increase(ctnr *realstate.Container) (int, error) {
        if ctnr == nil {
               return 0, fmt.Errorf("container cannot be nil")
        }
-
-conn := RedisConnPool.Get()
+ 
+       conn := RedisConnPool.Get()
        defer conn.Close()
        if err := conn.Err(); err != nil {
               return 0, fmt.Errorf("get redis conn failed: %s", err.Error())
@@ -51,7 +51,7 @@ func (h *healthCheckTries) Delete(ctnr *realstate.Container) error {
        }
        return h.remove(h.generateField(ctnr))
 }
-
+ 
 func (h *healthCheckTries) remove(field string) error {
        conn := RedisConnPool.Get()
        defer conn.Close()
@@ -72,7 +72,7 @@ func (h *healthCheckTries) generateField(ctnr *realstate.Container) string {
        }
        return ctnr.AppName + fieldSeparator + ctnr.ID
 }
-
+ 
 func (h *healthCheckTries) totalUpdate() {
        go func() {
               duration := time.Minute * 10
@@ -103,7 +103,7 @@ func (h *healthCheckTries) realTotalUpdate() {
                      glog.Errorf("field %s is not in correct format", field)
                      continue
               }
-			  appName, ctnrID := sField[0], sField[1]
+              appName, ctnrID := sField[0], sField[1]
               containers := RealState.GetContainersMap(appName)
               if _, ok := containers[ctnrID]; ok == false {
                      if err := h.remove(field); err != nil {

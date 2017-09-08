@@ -40,6 +40,7 @@ type SyncController struct {
        Algo                      *algorithm.Config
        UpdateAppStatusByNameFunc UpdateAppStatusByNameFunc
 }
+ 
 type SchedulerProvider interface {
        StatusCompare(app *app.App) error
        CreateContainers(app *app.App) error
@@ -57,7 +58,8 @@ func (c *SyncController) CreatingStatus(appName string, appInstanceCnt int, num 
               glog.Error("[ERROR] DockerStatusSearch error: ", err)
               return err
        }
-	   switch status {
+ 
+       switch status {
        case realstate.DockerStatusNotExist:
               if num == 0 {
                      return nil
@@ -75,7 +77,8 @@ func (c *SyncController) CreatingStatus(appName string, appInstanceCnt int, num 
               finishCount := state.Result.Success + state.Result.Fail
               glog.Infof("DockerStatusRunning: %s, TaskSuccessCount: %d, TaskFinishCount: %d, TaskTotalCount: %d",
                      appName, state.Result.Success, finishCount, state.Count)
-					 if state.Count == finishCount {
+ 
+              if state.Count == finishCount {
                      js, _ := json.Marshal(state)
                      glog.Infof("creating app state is: %s", string(js))
                      err = finishCall(state)
@@ -93,7 +96,7 @@ func (c *SyncController) CreatingStatus(appName string, appInstanceCnt int, num 
               if err != nil {
                      return err
               }
-			  err = finishCall(state)
+              err = finishCall(state)
               if err != nil {
                      glog.Error("CreatingState finish call fail: ", err)
               }
@@ -116,7 +119,8 @@ func (c *SyncController) DropOneContainer(container *realstate.Container) {
               } else {
                      result.CreateUnixTime = state.CreateUnixTime
               }
-			  if err == nil {
+ 
+              if err == nil {
                      result.Success++
                      ME.NewEventReporter(ME.ExecResult, ME.ExecResultData{
                             Reason:   "Drop container success",
@@ -133,7 +137,7 @@ func (c *SyncController) DropOneContainer(container *realstate.Container) {
                             AppName:  container.AppName,
                             CtnrID:   container.ID,
                             Error:    err.Error(),
-							Birthday: time.Now(),
+                            Birthday: time.Now(),
                             Message:  fmt.Sprintf("Drop Container %v Fail --> Fail Count: %v, %v", container.ID, result.Fail, err),
                      })
               }
@@ -148,7 +152,7 @@ func (c *SyncController) DropOneContainer(container *realstate.Container) {
        executor.GetDockerManager().DockerExecAsync(executor.Drop, container, func() error { return nil }, afterRun)
        return
 }
-
+ 
 func (c *SyncController) RunOneContainer(app *app.App, deployInfo *node.DeployInfo, customAfterFunc func(err error)) {
        commonAfterRun := func(err error) {
               result := realstate.Result{}
@@ -160,15 +164,15 @@ func (c *SyncController) RunOneContainer(app *app.App, deployInfo *node.DeployIn
               }
  
               if err == nil {
-                     result.Success  
+                     result.Success++
               } else {
-                     result.Fail  
+                     result.Fail++
               }
               err = c.CreatingState.DockerStatusUpdateResult(app.Name, result)
               if err != nil {
                      glog.Warning("CreatingState.DockerStatusUpdateResult fail: ", err)
               }
-			}
+       }
        afterRun := func(err error) {
               customAfterFunc(err)
               commonAfterRun(err)
@@ -186,7 +190,8 @@ func (c *SyncController) GetRealStateCTNRs(appName string) []*realstate.Containe
               glog.Errorf("get fastsettingInstance err: %v", err)
               return normalContainerList
        }
-	   for _, container := range containerlist {
+ 
+       for _, container := range containerlist {
               exist, err := fastsettingInstance.IsCTNRExecModeExist(container.ID)
               if nil != err {
                      glog.Errorf("IsCTNRExecModeExist: %s fail:%v", container.ID, err)
@@ -204,30 +209,31 @@ func (c *SyncController) GetRealStateCTNRsCount(appName string) int {
        containerlist := c.RealState.Containers(appName)
  
        //skip containers in special mode (maintenance ...)
-       notUpgradedCtnrsCount := 0
-       fastsettingInstance, err := fastsetting.GetFastsetting()
-       if err != nil {
-              glog.Errorf("get fastsettingInstance err: %v", err)
-              return notUpgradedCtnrsCount
-			  } 
-       for _, container := range containerlist {
-              exist, err := fastsettingInstance.IsCTNRExecModeExist(container.ID)
-              if nil != err {
-                     glog.Errorf("IsCTNRExecModeExist: %s fail:%v", container.ID, err)
-                     continue
-              }
-              if exist {
-                     continue
-              }
-              notUpgradedCtnrsCount++
-       }
-       return notUpgradedCtnrsCount
+       notUpgradedCtnrsCount: = 0
+       determinationInstance, err: = determination.GetFrame ()
+       if err! = nil {
+              glog.Errorf ("Get FixedInstance Err:% v", Err)
+              return notUpgradedCtnrsCount
+       }
+ 
+       for _, container: = range container list {
+              exist, err: = fixInstance.IsCTNRExecModeExist (container.ID)
+              if nil! = err {
+                     glog.Errorf ("IsCTNRExecModeExist:% s fail:% v", container.ID, err)
+                     continue
+              }
+              if exist {
+                     continue
+              }
+              notUpgradedCtnrsCount ++
+       }
+       return notUpgradedCtnrsCount
 }
- 
-func (c *SyncController) UpdateAppStatus(app *app.App, status string, log string) error {
-       if err := c.UpdateAppStatusByNameFunc(app.Name, status, log); err != nil {
-              return err
-       }
-       app.Status = status
-       return nil
+ 
+func (c * syncController) UpdateAppStatus (app * app.App, status string, log string) error {
+       if err: = c.UpdateAppStatusByNameFunc (app.Name, status, log); err! = nil {
+              return err
+       }
+       app.Status = status
+       return zero
 }

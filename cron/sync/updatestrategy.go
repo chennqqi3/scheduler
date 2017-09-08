@@ -24,7 +24,7 @@ const (
        UpdateMount        = "Mount"
        UpdateCMD          = "CMD"
 )
-
+ 
 type updateFunc func(app *appStorage.App, ctnr *realstate.Container) bool
  
 var strategy = map[string]updateFunc{
@@ -46,7 +46,7 @@ var strategy = map[string]updateFunc{
               }
               return !reflect.DeepEqual(fatherMap, sonMap)
        },
-	   UpdateCPU: func(app *appStorage.App, ctnr *realstate.Container) bool {
+       UpdateCPU: func(app *appStorage.App, ctnr *realstate.Container) bool {
               if app.CPU == ctnr.CPU {
                      return false
               } else {
@@ -67,7 +67,7 @@ var strategy = map[string]updateFunc{
                      return true
               }
        },
-	   UpdateMount: func(app *appStorage.App, ctnr *realstate.Container) bool {
+       UpdateMount: func(app *appStorage.App, ctnr *realstate.Container) bool {
               mountsString, err := app.Mount.ToString()
               if err != nil {
                      return false
@@ -86,7 +86,7 @@ var UpdateCompareFunc = func(app *appStorage.App, ctnr *realstate.Container) boo
        }
        return false
 }
-
+ 
 // Strategy Pattern of Update App
 type UpdateApp interface {
        UpdateContainers(provider SchedulerProvider, app *appStorage.App) error
@@ -105,7 +105,7 @@ func (this *AppNormal) UpdateContainers(provider SchedulerProvider, app *appStor
  
 type AppUpgrade struct {
 }
-
+ 
 func (this *AppUpgrade) UpdateContainers(provider SchedulerProvider, app *appStorage.App) error {
        glog.Infof(`Upgrade App: %s, image: %s, instance: %d, env: %v, cpu: %d, mem: %d, cmd: %s, mount: %v`,
               app.Name, app.Image.DockerImageURL, app.Instance, app.Envs, app.CPU, app.Memory, app.Cmd, app.Mount)
@@ -123,7 +123,8 @@ func (this *AppUpgrade) UpdateContainers(provider SchedulerProvider, app *appSto
                      oldCtnrs = append(oldCtnrs, realCtnr)
                      continue
               }
-			  if strings.Contains(realCtnr.Status, realstate.ContainerStatusUp) {
+             
+              if strings.Contains(realCtnr.Status, realstate.ContainerStatusUp) {
                      newCtnrUpCount++
               } else {
                      // abnormal containers
@@ -140,7 +141,8 @@ func (this *AppUpgrade) UpdateContainers(provider SchedulerProvider, app *appSto
                      })
               }
        }
-	   if newCtnrUpCount >= app.Instance {
+ 
+       if newCtnrUpCount >= app.Instance {
               glog.Infof(`Upgrade App "%s", Now Drop Old Instance...`, app.Name)
               ME.NewEventReporter(ME.UpgradeApp, ME.UpgradeAppData{
                      App:      *app,
@@ -151,7 +153,8 @@ func (this *AppUpgrade) UpdateContainers(provider SchedulerProvider, app *appSto
               provider.DropContainers(app.Name, app.Instance, oldCtnrs)
               return nil
        }
-	   // create new instances when app upgrade
+ 
+       // create new instances when app upgrade
        glog.Infof(`Upgrade App "%s", Now Create New Instance...`, app.Name)
        app.Instance -= newCtnrUpCount
        err := provider.CreateContainers(app)
@@ -177,7 +180,7 @@ func init() {
               appUpgrade = new(AppUpgrade)
        })
 }
-
+ 
 func (this *UpdateAppContext) getAppExecMode(app *appStorage.App) int {
        if app.AppType != appStorage.AppTypeLRC {
               return AppExecModeNormal
@@ -188,7 +191,7 @@ func (this *UpdateAppContext) getAppExecMode(app *appStorage.App) int {
        }
        return AppExecModeNormal
 }
-
+ 
 func (this *UpdateAppContext) GetUpdateAppContext(app *appStorage.App) *UpdateAppContext {
        execMode := this.getAppExecMode(app)
        switch execMode {

@@ -20,8 +20,8 @@ var _ = Describe("Nodes Test",func () {
               mynode *nodeStorage.Node
               myapp *appStorage.App
        )
-
-checkNodeResult := func (node *nodeStorage.Node) {
+ 
+       checkNodeResult := func (node *nodeStorage.Node) {
               result := GetNode(node.IP)
               Expect(result.IP).To(Equal(node.IP))
               Expect(result.Region).To(Equal(node.Region))
@@ -42,7 +42,7 @@ checkNodeResult := func (node *nodeStorage.Node) {
                      Expect(err).NotTo(HaveOccurred())
  
                      // Redis pool init
-					 RedisConnPool, err = redisoperate.InitRedisConnPool(Config().Redis)
+                     RedisConnPool, err = redisoperate.InitRedisConnPool(Config().Redis)
                      Expect(err).NotTo(HaveOccurred())
  
                      RealNodeState,err = nodeStorage.NewSafeNodeState(driver, RedisConnPool)
@@ -65,7 +65,7 @@ checkNodeResult := func (node *nodeStorage.Node) {
                      CPUUsage: 4,
                      MemUsage: 1024*4,
                      MemFree: 1024*3,
-					 UpdateAt: time.Now().Unix(),
+                     UpdateAt: time.Now().Unix(),
                      HeartBeatAt: time.Now().Unix(),
                      Images: []string{"paas-dockerhub-beta.huawei.com:5000/test/unitTestimg:latest"},
                      Fails: 0,
@@ -94,7 +94,7 @@ checkNodeResult := func (node *nodeStorage.Node) {
               JustBeforeEach(func () {
                      tmpnode = *mynode                       
               })
-			  AfterEach(func () {
+              AfterEach(func () {
                      DeleteNode(tmpnode.IP)
               })
  
@@ -116,15 +116,15 @@ checkNodeResult := func (node *nodeStorage.Node) {
                             tmpnode.Version = "1.6.9"
                             tmpnode.AvailableZone = "testAZ2"
                             UpdateNode(&tmpnode)
-                     })					 
-					 By("Step 2,Check result",func () {
+                     })
+                     By("Step 2,Check result",func () {
                             checkNodeResult(&tmpnode)    
                      })
               })
        })
        Describe("DeleteStaleNode",func () {
               It("When normal",func () {
-                     result := DeleteStaleNode(time.Now().Unix() 1)
+                     result := DeleteStaleNode(time.Now().Unix()+1)
                      // todo:
                      // Expect(len(result)).NotTo(Equal(0))
                      Expect(result).Should(ContainElement(mynode.IP))
@@ -141,7 +141,7 @@ checkNodeResult := func (node *nodeStorage.Node) {
                      Expect(err).To(BeNil())
               })
        })
-	   Describe("TheOne",func () {
+       Describe("TheOne",func () {
               It("when normal",func () {
                      result := TheOne()
                      Expect(result).NotTo(BeNil())
@@ -166,7 +166,7 @@ checkNodeResult := func (node *nodeStorage.Node) {
                      Expect(err).To(HaveOccurred())
                      Expect(result).To(Equal(""))
               })
-			  It("When IP is exist",func () {
+              It("When IP is exist",func () {
                      result,err := GetRegionByNode(mynode.IP)
                      Expect(err).To(BeNil())
                      Expect(result).To(Equal(mynode.Region))
@@ -192,7 +192,8 @@ checkNodeResult := func (node *nodeStorage.Node) {
                      Expect(err).To(BeNil())
                      DeleteNode(tmpnode2.IP)
               })
-			  It("When region is not exist",func () {
+ 
+              It("When region is not exist",func () {
                      notexistregion := "testnotexist"
                      result := ChooseNode(myapp,notexistregion,1)
                      Expect(len(result)).To(Equal(0))
@@ -210,7 +211,7 @@ checkNodeResult := func (node *nodeStorage.Node) {
                      })
               })
               It("When region has more node",func () {
-					By("Step 1,Memory lack",func () {
+                     By("Step 1,Memory lack",func () {
                             myapp.Memory = 1024 * 10
                             result := ChooseNode(myapp,tmpnode2.Region,1)
                             Expect(len(result)).To(Equal(0))
@@ -226,7 +227,7 @@ checkNodeResult := func (node *nodeStorage.Node) {
                             result := ChooseNode(myapp,tmpnode2.Region,deployCnt)
                             Expect(len(result)).To(Equal(deployCnt))
                             Expect(result[tmpnode1.IP]).To(Equal(1))
-							Expect(result[tmpnode2.IP]).To(Equal(1))
+                            Expect(result[tmpnode2.IP]).To(Equal(1))
                      })
                      By("Step 4,Memory enough,and deployCnt less then node",func () {
                             myapp.Memory = 1024
@@ -246,7 +247,7 @@ checkNodeResult := func (node *nodeStorage.Node) {
                      tmpnode1.IP = "10.101.10.102"
                      tmpnode1.VMType = "container"
                      tmpnode2 = *mynode
-					 tmpnode2.Region = "unitTRegion4"
+                     tmpnode2.Region = "unitTRegion4"
                      tmpnode2.IP = "10.101.10.103"
                      tmpnode2.VMType = "container"
  
@@ -267,7 +268,7 @@ checkNodeResult := func (node *nodeStorage.Node) {
                      By("Step 2,Memory is 0",func () {
                             myapp.CPU = 4
                             myapp.Memory = 0
-							_,selcount,err := NewSelectNode(myapp,mynode.Region)
+                            _,selcount,err := NewSelectNode(myapp,mynode.Region)
                             Expect(err).To(HaveOccurred())
                             Expect(len(selcount)).To(Equal(1))
                      })
@@ -287,32 +288,32 @@ checkNodeResult := func (node *nodeStorage.Node) {
                      Expect(nodeslic).NotTo(BeNil())                 
               })
        })
-	   Describe("SelectNode",func () {
-              var tmpnode1 nodeStorage.Node
-              var tmpnode2 nodeStorage.Node
-              var allnode []*nodeStorage.Node
- 
-              JustBeforeEach(func () {
-                     tmpnode1 = *mynode
-                     tmpnode1.Region = "unitTRegion4"
-                     tmpnode1.IP = "10.101.10.102"
-                     tmpnode1.VMType = "container"
-                     tmpnode2 = *mynode
-                     tmpnode2.Region = "unitTRegion4"
-                     tmpnode2.IP = "10.101.10.103"
-                     tmpnode2.VMType = "container"
- 
-                     UpdateNode(&tmpnode1)
-                     UpdateNode(&tmpnode2)
-                     allnode = []*nodeStorage.Node{
-                            mynode,
-                            &tmpnode1,
-                            &tmpnode2,
-                     }
-              })
-			  AfterEach(func () {
-                     DeleteNode(tmpnode1.IP)
-                     DeleteNode(tmpnode2.IP)
+       Describe("SelectNode", func () {
+              var tmpnode 1 nodeStorage.Node
+              var tmpnode 2 nodeStorage.Node
+              var allnode [] * nodeStorage.Node
+ 
+              JustBeforeEach (func () {
+                     tmpnode 1 = * mynode
+                     tmpnode 1. Region = "unit TRegion 4"
+                     tmpnode1.IP = "10.101.10.102"
+                     tmpnode1.VMType = "container"
+                     tmpnode 2 = * mynode
+                     tmpnode 2. Region = "unit TRegion 4"
+                     tmpnode2.IP = "10.101.10.103"
+                     tmpnode2.VMType = "container"
+ 
+                     UpdateNode (& tmpnode1)
+                     UpdateNode (& tmpnode 2)
+                     allnode = [] * nodeStorage.Node {
+                            mynode,
+                            & tmpnode1,
+                            & tmpnode 2,
+                     }
+              })
+              AfterEach (func () {
+                     DeleteNode (tmpnode1.IP)
+                     DeleteNode (tmpnode2.IP)
               })
               It("When app.CPU is 0 or app.Memory is 0",func () {
                      By("Step 1,CPU is 0",func () {
@@ -328,8 +329,8 @@ checkNodeResult := func (node *nodeStorage.Node) {
                             Expect(err).To(HaveOccurred())
                             Expect(len(selcount)).To(Equal(1))
                      })
-              })
-			  It("When allnode is empty",func () {
+              })    
+              It("When allnode is empty",func () {
                      allnode = []*nodeStorage.Node{}
                      _,selcount,err := SelectNode(myapp,allnode,mynode.Region)
                      Expect(err).To(BeNil())
@@ -345,7 +346,7 @@ checkNodeResult := func (node *nodeStorage.Node) {
               It("When region is not empty",func () {
                      myapp.VMType = tmpnode2.VMType
                      nodeslic,selcount,err := SelectNode(myapp,allnode,tmpnode2.Region)
-					 Expect(err).To(BeNil())  
+                     Expect(err).To(BeNil())  
                      Expect(len(selcount)).NotTo(Equal(0))
                      Expect(nodeslic).NotTo(BeNil())                 
               })           
@@ -364,7 +365,8 @@ checkNodeResult := func (node *nodeStorage.Node) {
                      tmpnode2.Region = "unitTRegion4"
                      tmpnode2.IP = "10.101.10.103"
                      tmpnode2.VMType = "container"
-					 UpdateNode(&tmpnode1)
+ 
+                     UpdateNode(&tmpnode1)
                      UpdateNode(&tmpnode2)
                      nodeslic = &nodeStorage.NodeSelectSlice{
                             &nodeStorage.NodeSelect {
@@ -386,7 +388,7 @@ checkNodeResult := func (node *nodeStorage.Node) {
                      Expect(err).To(BeNil())
                      DeleteNode(tmpnode2.IP)
               })
-			  It("When nodeslic is empty",func () {
+              It("When nodeslic is empty",func () {
                      nodeslic = &nodeStorage.NodeSelectSlice{}
                      result := NewChooseNode(nodeslic,myapp,1)
                      Expect(len(result)).To(Equal(0))
@@ -406,7 +408,7 @@ checkNodeResult := func (node *nodeStorage.Node) {
                                    Count: 0,
                             },                                
                      }
-					 result := NewChooseNode(tmpslic,myapp,3)
+                     result := NewChooseNode(tmpslic,myapp,3)
                      Expect(len(result)).To(Equal(0))
               })
               It("When select success",func () {

@@ -16,7 +16,7 @@ type ConfigFactory struct {
        getAppContainersFunc algorithm.GetAppAllContainersFunc
        dockerStatusUpdate   algorithm.DockerStatusUpdateFunc
 }
-
+ 
 func NewConfigFactory(getMinoins algorithm.GetAllMinionsFunc, getVirtalMinions algorithm.GetAllVirtalMinionsFunc, getContainers algorithm.GetAppAllContainersFunc, dockerStatusUpdate algorithm.DockerStatusUpdateFunc) *ConfigFactory {
        return &ConfigFactory{
               getAllMinions:        getMinoins,
@@ -30,6 +30,7 @@ func NewConfigFactory(getMinoins algorithm.GetAllMinionsFunc, getVirtalMinions a
 func (f *ConfigFactory) Create() (*algorithm.Config, error) {
        return f.CreateFromProvider(DefaultProvider)
 }
+ 
 // Creates a scheduler from the name of a registered algorithm provider.
 func (f *ConfigFactory) CreateFromProvider(providerName string) (*algorithm.Config, error) {
        provider, err := GetAlgorithmProvider(providerName)
@@ -39,7 +40,7 @@ func (f *ConfigFactory) CreateFromProvider(providerName string) (*algorithm.Conf
  
        return f.CreateFromKeys(provider.filterFunctionMap, provider.strategyFunctionMap)
 }
-
+ 
 // Creates a scheduler from a set of registered fit predicate keys and priority keys.
 func (f *ConfigFactory) CreateFromKeys(filterFunctionMap map[string]filter.FilterFunc, strategyFunctionMap map[string]strategy.StrategyFunc) (*algorithm.Config, error) {
  
@@ -54,6 +55,7 @@ type AlgorithmProviderMap struct {
        sync.RWMutex
        Provider map[string]AlgorithmProviderConfig
 }
+ 
 type AlgorithmProviderConfig struct {
        filterFunctionMap   map[string]filter.FilterFunc
        strategyFunctionMap map[string]strategy.StrategyFunc
@@ -78,12 +80,13 @@ func RegisterAlgorithmProvider(name string, fitFilterMap map[string]filter.Filte
        if "" == name {
               return errors.New("name can not be null")
        }
-	   if nil == fitFilterMap || nil == fitStrategyMap {
-              return errors.New("fitFilterMap or fitStrategyMap! name: "   name)
+ 
+       if nil == fitFilterMap || nil == fitStrategyMap {
+              return errors.New("fitFilterMap or fitStrategyMap! name: " + name)
        }
  
        if _, ok := algorithmProviderMap.Provider[name]; ok {
-              return errors.New("algorithm provider already exist! name: "   name)
+              return errors.New("algorithm provider already exist! name: " + name)
        }
  
        algorithmProviderMap.Provider[name] = AlgorithmProviderConfig{
@@ -93,7 +96,7 @@ func RegisterAlgorithmProvider(name string, fitFilterMap map[string]filter.Filte
  
        return nil
 }
-
+ 
 func RegisterFitFilter(filters map[string]filter.FilterFunc, name string, filterFunc filter.FilterFunc) error {
        if "" == name {
               return fmt.Errorf("name can not be null")
@@ -116,7 +119,7 @@ func RegisterFitFilter(filters map[string]filter.FilterFunc, name string, filter
        return nil
  
 }
-
+ 
 func RegisterFitStrategy(strategy map[string]strategy.StrategyFunc, name string, strategyFunc strategy.StrategyFunc) error {
        if "" == name {
               return fmt.Errorf("name can not be null")
@@ -137,7 +140,7 @@ func RegisterFitStrategy(strategy map[string]strategy.StrategyFunc, name string,
        strategy[name] = strategyFunc
        return nil
 }
-
+ 
 // This function should not be used to modify providers. It is publicly visible for testing.
 func GetAlgorithmProvider(name string) (*AlgorithmProviderConfig, error) {
        algorithmProviderMap.RLock()

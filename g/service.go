@@ -23,7 +23,7 @@ import (
 /*
        Model Description:  this is a container service discovery model, which is to
        execute container discover service when the app (the coantiner belongs.)
-status turns to started.
+       status turns to started.
               This model will call the consul agent, where the container is running on,
        to register the container to consul cluster. It's convenient to register con-
        taine to different consul clusters with varies "Data Center" (simplied called
@@ -43,7 +43,7 @@ const (
        // consul agent http port.
        consulPort  int    = 8500
 )
-
+ 
 var csd CtnrSvcDiscv
  
 func StartService() error {
@@ -65,7 +65,7 @@ func StartService() error {
        go csd.ctnrServiceGuard()
        return nil
 }
-
+ 
 type CtnrSvcDiscv struct {
        Task               TP.TaskPoolInterface
        PortType           string
@@ -93,8 +93,8 @@ func (cs *CtnrSvcDiscv) newDrv(address string) (*service.CtnrService, error) {
               Prefix: c.ConsulService.CtnrServicePrefix,
               Tags:   c.ConsulService.CtnrServiceTags,
        }
-
-// Instantiate cosul connection objects
+ 
+       // Instantiate cosul connection objects
        drv, hasErr := service.NewCtnrService(client, cfg)
        if nil != hasErr {
               return nil, fmt.Errorf("NewCtnrService error: %v", hasErr)
@@ -117,7 +117,7 @@ func (cs *CtnrSvcDiscv) ctnrFilter(ctnr *realstate.Container) bool {
        }
        return false
 }
-
+ 
 /*
        Description:  register container to consul cluster. each register operation
        is handled with a independent go routine.
@@ -141,7 +141,7 @@ func (cs *CtnrSvcDiscv) register(ctnr realstate.Container) {
                             glog.Errorf("init service driver failed. Error: %v", err)
                             return
                      }
-					 if err := drv.RegisterCtnr(ctnr.AppName, ctnr.IP, ctnr.MinionHostname, ctnr.ID, port, serviceEnv); nil != err {
+                     if err := drv.RegisterCtnr(ctnr.AppName, ctnr.IP, ctnr.MinionHostname, ctnr.ID, port, serviceEnv); nil != err {
                             glog.Errorf("Register container id: %s, ip: %s failed. Error: %s", ctnr.ID, ctnr.IP, err.Error())
                      } else {
                             glog.Infof("Register container id: %s, ip: %s to consul", ctnr.ID, ctnr.IP)
@@ -154,7 +154,7 @@ func (cs *CtnrSvcDiscv) register(ctnr realstate.Container) {
                             if len(portinfo.Ports) < 1 {
                                    registerPort(-1)
                             } else {
-								for _, dockerPort := range portinfo.Ports {
+                                   for _, dockerPort := range portinfo.Ports {
                                           if "" == dockerPort.HostPort {
                                                  continue
                                           }
@@ -218,7 +218,7 @@ func (cs *CtnrSvcDiscv) RegisterEventsToME() error {
               Drop:        false,
               Description: "container service discover model",
        }
-	   cs.eventDeleteCtnrSn, err = ME.RegisterEvent(userdelctnr, &cs.DeregEventChan)
+       cs.eventDeleteCtnrSn, err = ME.RegisterEvent(userdelctnr, &cs.DeregEventChan)
        if nil != err {
               return err
        }
@@ -240,7 +240,7 @@ func (cs *CtnrSvcDiscv) WaitEvent() {
                             continue
                      }
                      // glog.Debug("ctnr service received register event: ", string(dat))
-					 // register container(s) the app have.
+                     // register container(s) the app have.
                      for _, ctnr := range val.Containers {
                             if cs.ctnrFilter(&ctnr) {
                                    cs.register(ctnr)
@@ -258,8 +258,7 @@ func (cs *CtnrSvcDiscv) WaitEvent() {
               }
        }
 }
-
-
+ 
 /*
        Description:  a goroutine with a infinite for loop to handle synchronise
        containers in local redis and remote consul cluster. Containers only exist
@@ -278,7 +277,7 @@ func (cs *CtnrSvcDiscv) ctnrServiceGuard() {
                      glog.Errorf("GetDesiredState error: %s", err.Error())
                      continue
               }
-			  ctnrAppStatusMap := make(map[string]string)
+              ctnrAppStatusMap := make(map[string]string)
               nodeCtnrs := make(map[string][]*realstate.Container)
               for _, app := range apps {
                      // get all the app's containers in local redis.
@@ -299,7 +298,7 @@ func (cs *CtnrSvcDiscv) ctnrServiceGuard() {
               // handle each minions with a for loop.
               for _, node := range allNodes {
                      svcmap, err := cs.getServiceIDMap(node.IP)
-					 if nil != err {
+                     if nil != err {
                             glog.Error("getServiceIDMap failed. Error: ", err)
                             continue
                      }
@@ -313,7 +312,7 @@ func (cs *CtnrSvcDiscv) ctnrServiceGuard() {
                                           if cs.ctnrFilter(ctnr) {
                                                  cs.register(*ctnr)
                                                  glog.Warningf("Sync total register container id: %s, ip: %s to consul", ctnr.ID, ctnr.IP)
-}
+                                          }
                                    }
                             }
                      }
@@ -343,7 +342,7 @@ func (cs *CtnrSvcDiscv) getServiceIDMap(ip string) (map[string]string, error) {
        if nil != hasErr {
               return nil, hasErr
        }
-	   svcmap := make(map[string]string)
+       svcmap := make(map[string]string)
        for _, svcs := range services {
               if strings.HasPrefix(svcs.ID, cs.Prefix) {
                      svcmap[svcs.ID[len(cs.Prefix):]] = svcs.Address
@@ -351,5 +350,3 @@ func (cs *CtnrSvcDiscv) getServiceIDMap(ip string) (map[string]string, error) {
        }
        return svcmap, nil
 }
-
-

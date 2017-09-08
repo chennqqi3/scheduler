@@ -27,7 +27,8 @@ func (this *JobQueue) Enqueue(rc redis.Conn, queueName string, job *Job) error {
  
        this.Lock()
        defer this.Unlock()
-	   _, err = rc.Do("RPUSH", queueName, jobData)
+ 
+       _, err = rc.Do("RPUSH", queueName, jobData)
        if err != nil {
               return err
        }
@@ -54,7 +55,7 @@ func (this *JobQueue) Dequeue(rc redis.Conn, queueName string) (*Job, error) {
        }
  
        var job Job
-	   decoder := json.NewDecoder(bytes.NewReader(jobData.([]byte)))
+       decoder := json.NewDecoder(bytes.NewReader(jobData.([]byte)))
        if err := decoder.Decode(&job); err != nil {
               return nil, err
        }
